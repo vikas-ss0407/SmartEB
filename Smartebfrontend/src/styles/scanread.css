@@ -1,0 +1,104 @@
+.scan-readings-page {
+  padding-top: 80px; /* ✅ Makes room for fixed nav bar */
+}
+
+.scan-readings-container {
+  font-family: Arial, sans-serif;
+  padding: 20px;
+  max-width: 900px;
+  margin: auto;
+  background-color: #f9f9f9;
+  border-radius: 12px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-area {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.input-row {
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.input-row label {
+  width: 180px;
+  font-weight: 500;
+}
+
+.input-row input {
+  padding: 8px;
+  flex: 1;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.enter-button,
+.scan-button,
+.capture-button,
+.stop-button,
+.submit-button {
+  padding: 8px 16px;
+  border: none;
+  background-color: #007bff;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.enter-button:hover,
+.scan-button:hover,
+.capture-button:hover,
+.stop-button:hover,
+.submit-button:hover {
+  background-color: #0056b3;
+}
+
+.meter-no-label {
+  margin-left: 20px;
+}
+
+.camera-container {
+  margin-top: 15px;
+  background-color: #000;
+  padding: 10px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.camera-container video {
+  max-width: 100%;
+  border-radius: 8px;
+}
+
+.capture-button,
+.stop-button {
+  margin: 10px 5px 0;
+}
+
+.camera-icon {
+  font-size: 24px;
+  margin-left: 10px;
+}
+
+.footer {
+  margin-top: 30px;
+  text-align: center;
+  font-size: 14px;
+  color: #555;
+}
+
+.footer a {
+  color: #007bff;
+  text-decoration: none;
+  margin: 0 5px;
+}
+
+.footer a:hover {
+  text-decoration: underline;
+}

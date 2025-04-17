@@ -1,0 +1,113 @@
+/* Improved EReceipt.css */
+
+.ereceipt-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 300vh;
+    background-color: rgb(128, 128, 128);
+    padding-bottom: 500px;
+}
+
+.form-area {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgb(192, 192, 192);
+    padding: 30px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 60%;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.input-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+label {
+    font-size: 16px;
+    width: 40%;
+    text-align: right;
+    font-weight: bold;
+}
+
+input {
+    padding: 12px;
+    border: 1px solid rgb(204, 204, 204);
+    border-radius: 5px;
+    font-size: 16px;
+    flex: 1;
+    margin-left: 15px;
+}
+
+.enter-button {
+    background-color: rgb(211, 211, 211);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.table-container {
+    width: 100%;
+    margin-top: 20px;
+}
+
+.ereceipt-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: white;
+}
+
+.ereceipt-table th, .ereceipt-table td {
+    border: 1px solid rgb(204, 204, 204);
+    padding: 12px;
+    text-align: center;
+}
+
+.ereceipt-table th {
+    background-color: rgb(240, 240, 240);
+    font-weight: bold;
+}
+
+.download-btn {
+    background-color: rgb(211, 211, 211);
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* Footer */
+.footer {
+    background-color: rgb(211, 211, 211); /* Light gray */
+    padding: 15px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.footer a {
+    color: #333;
+    text-decoration: none;
+    margin-left: 5px;
+    font-weight: 600;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}

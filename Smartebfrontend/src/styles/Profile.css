@@ -1,0 +1,130 @@
+/* Profile.css */
+
+/* Container for the entire profile page */
+.profile-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 300vh;
+    background-color: rgb(128, 128, 128);
+    padding-bottom: 500px;
+}
+
+/* Logout button */
+.logout-button {
+    background-color: rgb(211, 211, 211);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    margin-left: 15px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+/* Form area container */
+.form-area {
+    background-color: rgb(192, 192, 192);
+    padding: 30px;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Align form elements to the left */
+    width: 60%;
+    max-width: 700px;
+    margin: 0 auto;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    margin-top: 30px;
+}
+
+/* Form row to align input fields */
+.input-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+/* Label styling */
+label {
+    font-size: 16px;
+    width: 30%; /* Adjust width of the label */
+    text-align: right;
+    font-weight: bold;
+}
+
+/* Input fields */
+input {
+    padding: 12px;
+    border: 1px solid rgb(204, 204, 204);
+    border-radius: 5px;
+    font-size: 16px;
+    flex: 1;
+    margin-left: 15px;
+    width: 60%; /* Adjust input field width */
+}
+
+/* Enter button (for any actions) */
+.enter-button {
+    background-color: rgb(211, 211, 211);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 100%;
+    margin-top: 20px;
+}
+
+/* Password row for changing passwords */
+.password-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+/* Styling for password inputs */
+.password-row input {
+    margin-right: 15px; /* Space between password fields */
+    width: 45%; /* Adjust width for password fields */
+    padding: 12px;
+    font-size: 16px;
+}
+
+/* Save button */
+.save-button {
+    background-color: rgb(211, 211, 211);
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    width: 20%; /* Adjust width to fit well in the row */
+}
+
+/* Footer section */
+.footer {
+    background-color: rgb(211, 211, 211); /* Light gray */
+    padding: 15px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Footer link styling */
+.footer a {
+    color: #333;
+    text-decoration: none;
+    margin-left: 5px;
+    font-weight: 600;
+}
+
+/* Hover effect for footer links */
+.footer a:hover {
+    text-decoration: underline;
+}
