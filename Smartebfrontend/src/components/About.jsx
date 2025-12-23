@@ -37,10 +37,11 @@ function About() {
             {/* Overview */}
             <div className="bg-gradient-to-r from-teal-50 to-emerald-50 p-4 md:p-6 rounded-lg border-l-4 border-teal-500">
               <p className="text-slate-700 text-sm sm:text-base md:text-lg leading-relaxed">
-                The <strong className="text-teal-700">Smart EB Meter Reader</strong> is an advanced technology-driven solution designed to modernize electricity
-                meter reading, making it more efficient, transparent, and user-friendly. Traditional electricity bill calculations
-                and manual meter readings often lead to inaccuracies, delays, and human errors. Our system overcomes these challenges
-                by automating the entire process, ensuring accurate readings and real-time monitoring.
+                The <strong className="text-teal-700">Smart EB Meter Reader</strong> is a web-based mobile solution that empowers electricity consumers
+                to submit their own meter readings using their device camera. Instead of relying on manual field readings by utility officials,
+                users simply photograph their energy meter, and our advanced OCR (Optical Character Recognition) technology automatically extracts
+                the reading. This approach eliminates manual data entry errors, reduces the workload on EB officials, ensures on-time submissions,
+                and provides transparent, accurate billing.
               </p>
             </div>
 
@@ -51,28 +52,28 @@ function About() {
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                 <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-3 md:p-4 rounded-lg border-2 border-green-300 hover:shadow-md hover:-translate-y-0.5 transition">
-                  <p className="font-bold text-green-700 text-sm md:text-base">📊 Real-Time Monitoring:</p>
-                  <p className="text-slate-600 text-xs md:text-sm mt-1">Check electricity consumption instantly through a digital interface.</p>
+                  <p className="font-bold text-green-700 text-sm md:text-base">� Photo-Based Reading Capture:</p>
+                  <p className="text-slate-600 text-xs md:text-sm mt-1">Users scan their meter dial using the device camera for quick, on-site submission.</p>
                 </div>
                 <div className="bg-gradient-to-br from-blue-50 to-cyan-50 p-3 md:p-4 rounded-lg border-2 border-blue-300 hover:shadow-md hover:-translate-y-0.5 transition">
-                  <p className="font-bold text-blue-700 text-sm md:text-base">🤖 Automated Readings:</p>
-                  <p className="text-slate-600 text-xs md:text-sm mt-1">Eliminates manual efforts using IoT-based technology.</p>
+                  <p className="font-bold text-blue-700 text-sm md:text-base">🤖 OCR Technology:</p>
+                  <p className="text-slate-600 text-xs md:text-sm mt-1">Automatic number extraction from meter photos using AI-powered optical character recognition.</p>
                 </div>
                 <div className="bg-gradient-to-br from-yellow-50 to-amber-50 p-3 md:p-4 rounded-lg border-2 border-yellow-300 hover:shadow-md hover:-translate-y-0.5 transition">
                   <p className="font-bold text-yellow-700 text-sm md:text-base">💯 Accurate Billing:</p>
-                  <p className="text-slate-600 text-xs md:text-sm mt-1">Precise calculations based on real-time usage, reducing discrepancies.</p>
+                  <p className="text-slate-600 text-xs md:text-sm mt-1">Automated bill calculation based on OCR-extracted readings, eliminating manual transcription errors.</p>
                 </div>
                 <div className="bg-gradient-to-br from-pink-50 to-rose-50 p-3 md:p-4 rounded-lg border-2 border-pink-300 hover:shadow-md hover:-translate-y-0.5 transition">
                   <p className="font-bold text-pink-700 text-sm md:text-base">💳 Digital Payments:</p>
-                  <p className="text-slate-600 text-xs md:text-sm mt-1">Integrated payment gateways for instant transactions.</p>
+                  <p className="text-slate-600 text-xs md:text-sm mt-1">Seamless online bill payment portal with instant confirmations and e-receipts.</p>
                 </div>
                 <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-3 md:p-4 rounded-lg border-2 border-purple-300 hover:shadow-md hover:-translate-y-0.5 transition">
-                  <p className="font-bold text-purple-700 text-sm md:text-base">📈 Usage Analytics:</p>
-                  <p className="text-slate-600 text-xs md:text-sm mt-1">Detailed insights on consumption patterns for optimization.</p>
+                  <p className="font-bold text-purple-700 text-sm md:text-base">📊 Consumption Tracking:</p>
+                  <p className="text-slate-600 text-xs md:text-sm mt-1">View billing history, previous readings, and consumption trends in one place.</p>
                 </div>
                 <div className="bg-gradient-to-br from-orange-50 to-red-50 p-3 md:p-4 rounded-lg border-2 border-orange-300 hover:shadow-md hover:-translate-y-0.5 transition">
                   <p className="font-bold text-orange-700 text-sm md:text-base">🔐 Secure & Transparent:</p>
-                  <p className="text-slate-600 text-xs md:text-sm mt-1">Data security and billing transparency guaranteed.</p>
+                  <p className="text-slate-600 text-xs md:text-sm mt-1">Secure user authentication and transparent billing with timestamp verification.</p>
                 </div>
               </div>
             </div>
@@ -83,10 +84,12 @@ function About() {
                 <span className="text-xl md:text-2xl">⚙️</span> How It Works
               </h3>
               <p className="text-slate-700 text-xs sm:text-sm md:text-base leading-relaxed">
-                The system is designed to automatically capture meter readings through smart sensors embedded in electricity meters.
-                These readings are transmitted securely to a centralized database, where they are processed to generate accurate bills.
-                Users can access their electricity usage and billing details via a web portal or mobile app. Additionally, they can
-                make payments instantly and track their previous transactions.
+                Users open the Smart EB Meter Reader web application and navigate to "Scan Readings." They enter their consumer number,
+                and the system retrieves their account details including the previous month's reading and tariff. Using their device camera,
+                users capture a clear photo of their meter dial. The OCR engine instantly recognizes the numerical display, extracts the
+                current reading, and automatically calculates the bill amount. Users can edit the reading if needed, then submit it. The reading
+                is saved securely, and users can instantly pay their bill or download an e-receipt. EB officials gain instant visibility into
+                submitted readings instead of scheduling manual field visits.
               </p>
             </div>
 
@@ -99,36 +102,36 @@ function About() {
                 <li className="flex items-start gap-2 md:gap-3 p-2 md:p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
                   <span className="text-green-600 font-bold text-lg md:text-xl">✓</span>
                   <div>
-                    <p className="font-semibold text-slate-800 text-sm md:text-base">Enhanced Convenience</p>
-                    <p className="text-slate-600 text-xs md:text-sm">No more waiting for manual readings; get updates anytime, anywhere.</p>
+                    <p className="font-semibold text-slate-800 text-sm md:text-base">User Convenience</p>
+                    <p className="text-slate-600 text-xs md:text-sm">Submit readings anytime, anywhere using a smartphone; no need to wait for officials.</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2 md:gap-3 p-2 md:p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
                   <span className="text-blue-600 font-bold text-lg md:text-xl">✓</span>
                   <div>
-                    <p className="font-semibold text-slate-800 text-sm md:text-base">Cost Efficiency</p>
-                    <p className="text-slate-600 text-xs md:text-sm">Reduces operational costs by eliminating manual processes.</p>
+                    <p className="font-semibold text-slate-800 text-sm md:text-base">Reduced Official Workload</p>
+                    <p className="text-slate-600 text-xs md:text-sm">EB officials spend less time on field visits and manual data entry; focus on customer service instead.</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2 md:gap-3 p-2 md:p-3 bg-green-50 rounded-lg border-l-4 border-green-500">
                   <span className="text-green-600 font-bold text-lg md:text-xl">✓</span>
                   <div>
                     <p className="font-semibold text-slate-800 text-sm md:text-base">Eco-Friendly</p>
-                    <p className="text-slate-600 text-xs md:text-sm">Paperless billing contributes to environmental conservation.</p>
+                    <p className="text-slate-600 text-xs md:text-sm">Paperless submissions and digital receipts reduce environmental impact.</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2 md:gap-3 p-2 md:p-3 bg-purple-50 rounded-lg border-l-4 border-purple-500">
                   <span className="text-purple-600 font-bold text-lg md:text-xl">✓</span>
                   <div>
-                    <p className="font-semibold text-slate-800 text-sm md:text-base">Improved Experience</p>
-                    <p className="text-slate-600 text-xs md:text-sm">User-friendly interface ensures smooth navigation and interaction.</p>
+                    <p className="font-semibold text-slate-800 text-sm md:text-base">Fewer Billing Errors</p>
+                    <p className="text-slate-600 text-xs md:text-sm">OCR automation eliminates human transcription mistakes and ensures fair, accurate billing.</p>
                   </div>
                 </li>
                 <li className="flex items-start gap-2 md:gap-3 p-2 md:p-3 bg-orange-50 rounded-lg border-l-4 border-orange-500">
                   <span className="text-orange-600 font-bold text-lg md:text-xl">✓</span>
                   <div>
-                    <p className="font-semibold text-slate-800 text-sm md:text-base">Scalability</p>
-                    <p className="text-slate-600 text-xs md:text-sm">Suitable for residential, commercial, and industrial applications.</p>
+                    <p className="font-semibold text-slate-800 text-sm md:text-base">Instant Bill Availability</p>
+                    <p className="text-slate-600 text-xs md:text-sm">Readings are processed immediately; users can pay and get e-receipts instantly without delays.</p>
                   </div>
                 </li>
               </ul>
@@ -140,9 +143,11 @@ function About() {
                 <span className="text-xl md:text-2xl">🚀</span> Future Scope
               </h3>
               <p className="text-slate-700 text-xs sm:text-sm md:text-base leading-relaxed">
-                The Smart EB Meter Reader is designed for continuous innovation. Future enhancements may include AI-powered consumption
-                predictions, automated energy-saving suggestions, and integration with renewable energy sources such as solar panels.
-                With smart grid technology advancing, this system has the potential to revolutionize energy management at a global level.
+                The Smart EB Meter Reader roadmap includes advanced OCR models for faster and more diverse meter types, multi-language support
+                for broader accessibility, AI-powered consumption analytics to help users identify peak usage patterns, automated bill notifications,
+                and integration with payment systems for one-click billing. We also envision support for commercial and industrial meters, admin
+                dashboards for real-time revenue tracking, and eventual mobile app availability for iOS and Android. Our goal is to make meter
+                reading a seamless, error-free process that benefits both consumers and utility providers.
               </p>
             </div>
           </div>

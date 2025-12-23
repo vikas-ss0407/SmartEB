@@ -8,6 +8,7 @@ import ScanReadings from './components/scanread';
 import EReceipt from './components/ereciept';
 import Profile from './components/Profile';
 import About from './components/About';
+import Landing from './components/Landing';
 import AdminDashboard from './components/admin/AdminDashboard'; // Admin Dashboard route
 import AddConsumer from './components/admin/AddConsumer';
 import AddReading from './components/admin/AddReading';
@@ -53,7 +54,7 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50">
     <Routes>
-      <Route path="/" element={<Navigate to="/login" />} />
+      <Route path="/" element={<Landing />} />
 
       {/* Handle login routing logic */}
       <Route
