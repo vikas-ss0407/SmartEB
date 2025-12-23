@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Tesseract from 'tesseract.js';
-import '../styles/scanread.css';
-import '../styles/navbar.css';
 
 function ScanReadings() {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -130,19 +128,19 @@ function ScanReadings() {
   };
 
   return (
-    <div className="scan-readings-page">
-      <div className="top-nav">
+    <div className="scan-readings-page min-h-screen bg-gray-50">
+      <div className="top-nav flex items-center justify-between px-4 py-3 bg-white shadow">
         <div className="home-button">
           <span role="img" aria-label="scan">📷</span> Scan Readings
         </div>
-        <div className="user-info">
+        <div className="user-info flex items-center gap-3">
           Hi {userName}, Welcome!
-          <button className="logout-button" onClick={handleLogout}>Logout →</button>
+          <button className="logout-button px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600" onClick={handleLogout}>Logout →</button>
         </div>
       </div>
 
-      <div className="scan-readings-container">
-        <div className="form-area">
+      <div className="scan-readings-container max-w-3xl mx-auto p-6">
+        <div className="form-area bg-white shadow rounded-lg p-6 space-y-4">
           <div className="input-row">
             <label htmlFor="consumerNo">Consumer No :</label>
             <input
@@ -150,8 +148,9 @@ function ScanReadings() {
               id="consumerNo"
               value={consumerNo}
               onChange={e => setConsumerNo(e.target.value)}
+              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded"
             />
-            <button className="enter-button" onClick={fetchConsumerDetails}>Enter</button>
+            <button className="enter-button px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={fetchConsumerDetails}>Enter</button>
           </div>
 
           <div className="input-row">
@@ -190,8 +189,10 @@ function ScanReadings() {
               muted
               playsInline
             />
-            <button className="capture-button" onClick={captureImage}>Take Photo</button>
-            <button className="stop-button" onClick={stopCamera}>Stop Camera</button>
+            <div className="mt-3 flex gap-3">
+              <button className="capture-button px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700" onClick={captureImage}>Take Photo</button>
+              <button className="stop-button px-3 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300" onClick={stopCamera}>Stop Camera</button>
+            </div>
             <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
           </div>
 
@@ -200,12 +201,11 @@ function ScanReadings() {
             <input type="text" value={amount} readOnly />
           </div>
 
-          <button className="submit-button" onClick={submitCitizenReading}>Submit</button>
+          <button className="submit-button w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" onClick={submitCitizenReading}>Submit</button>
         </div>
-
-        <div className="footer">
+        <div className="footer bg-white border-t p-4 text-center text-sm text-gray-600">
           <p>&copy; 2025 ScanReadings Inc. All rights reserved.</p>
-          <a href="/privacy-policy">Privacy Policy</a> | <a href="/terms-of-service">Terms of Service</a>
+          <a className="text-blue-600 hover:underline" href="/privacy-policy">Privacy Policy</a> | <a className="text-blue-600 hover:underline" href="/terms-of-service">Terms of Service</a>
         </div>
       </div>
     </div>

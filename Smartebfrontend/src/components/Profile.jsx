@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import '../styles/Profile.css';
-import '../styles/navbar.css';
 
 function Profile() {
   const navigate = useNavigate();
@@ -48,33 +46,35 @@ function Profile() {
   };
 
   return (
-    <div className="profile-container">
-      <div className="top-nav">
-        <div className="profile-title">👤 Profile</div>
-        <div className="consumer-no">Consumer No: 00000000</div>
-        <button className="logout-button" onClick={handleLogout}>Logout →</button>
+    <div className="min-h-screen bg-gray-50">
+      <div className="flex items-center justify-between px-4 py-3 bg-white shadow">
+        <div className="font-medium">👤 Profile</div>
+        <div className="text-gray-700">Consumer No: 00000000</div>
+        <button className="px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600" onClick={handleLogout}>Logout →</button>
       </div>
       {loading ? (
-        <p>Loading...</p>
+        <p className="p-6">Loading...</p>
       ) : (
-        <div className="form-area">
-          <div className="input-row">
-            <label>User Name:</label>
-            <input type="text" value={userData.userName} readOnly />
+        <div className="max-w-3xl mx-auto p-6">
+          <div className="bg-white rounded-lg shadow p-6 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">User Name:</label>
+              <input className="mt-1 w-full px-3 py-2 border border-gray-300 rounded bg-gray-100" type="text" value={userData.userName} readOnly />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Address:</label>
+              <input className="mt-1 w-full px-3 py-2 border border-gray-300 rounded bg-gray-100" type="text" value={userData.address} readOnly />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">E-mail ID:</label>
+              <input className="mt-1 w-full px-3 py-2 border border-gray-300 rounded bg-gray-100" type="email" value={userData.email} readOnly />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Phone No:</label>
+              <input className="mt-1 w-full px-3 py-2 border border-gray-300 rounded bg-gray-100" type="tel" value={userData.phoneNo} readOnly />
+            </div>
+            {/* Password update section can be implemented later */}
           </div>
-          <div className="input-row">
-            <label>Address:</label>
-            <input type="text" value={userData.address} readOnly />
-          </div>
-          <div className="input-row">
-            <label>E-mail ID:</label>
-            <input type="email" value={userData.email} readOnly />
-          </div>
-          <div className="input-row">
-            <label>Phone No:</label>
-            <input type="tel" value={userData.phoneNo} readOnly />
-          </div>
-          {/* Password update section can be implemented later */}
         </div>
       )}
     </div>
