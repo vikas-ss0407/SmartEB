@@ -23,17 +23,18 @@ function ScanReadings({ onLogout }) {
 
   const startCamera = async () => {
     try {
+      setIsCameraOpen(true);
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
-          setIsCameraOpen(true);
         } else {
           console.error('Video element not found');
         }
       }, 100);
     } catch (err) {
       console.error('Error accessing camera:', err);
+      setIsCameraOpen(false);
     }
   };
 
@@ -57,7 +58,7 @@ function ScanReadings({ onLogout }) {
     Tesseract.recognize(imageData, 'eng')
       .then(({ data: { text } }) => {
         const extracted = parseFloat(text.match(/[\d.]+/g)?.[0] || 0).toFixed(2);
-        setCurrentReading(`${extracted} kwh`);
+        setCurrentReading(extracted);
         const prev = parseFloat(previousReading) || 0;
         const curr = parseFloat(extracted) || 0;
         const units = curr - prev;
@@ -72,16 +73,76 @@ function ScanReadings({ onLogout }) {
 
   const fetchConsumerDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/consumer/${consumerNo}`);
+      const response = await fetch(`http://localhost:5000/api/consumers/${consumerNo}`);
       if (!response.ok) throw new Error('Consumer not found');
       const data = await response.json();
+
+      const tariffRateMap = {
+        Domestic: 5,
+        Commercial: 10,
+        Industrial: 15,
+      };
+
       setConsumerName(data.name || '');
-      setMeterNo(data.meterNo || '');
-      setPreviousReading(data.previousReading || '');
-      setTariff(data.tariff || 0);
+      setMeterNo(data.meterSerialNumber || '');
+      const lastReading = Array.isArray(data.readings) && data.readings.length > 0
+        ? data.readings[data.readings.length - 1].units
+        : data.currentReading ?? 0;
+      setPreviousReading(lastReading);
+      setTariff(tariffRateMap[data.tariffPlan] || 0);
     } catch (error) {
       console.error('Fetch error:', error);
       alert('Consumer not found.');
+    }
+  };
+
+  const handleCurrentReadingChange = (value) => {
+    setCurrentReading(value);
+    const prev = parseFloat(previousReading) || 0;
+    const curr = parseFloat(value) || 0;
+    const units = curr - prev;
+    setAmount((units * tariff).toFixed(2));
+  };
+
+  const handleSubmitReading = async () => {
+    const prev = parseFloat(previousReading) || 0;
+    const curr = parseFloat(currentReading);
+
+    if (Number.isNaN(curr)) {
+      alert('Please enter a valid current reading.');
+      return;
+    }
+
+    const unitsConsumed = curr - prev;
+    if (unitsConsumed < 0) {
+      alert('Current reading cannot be less than previous reading.');
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:5000/api/consumers/add-reading/${consumerNo}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          unitsConsumed,
+          readingDate: new Date().toISOString(),
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || 'Failed to submit reading');
+      }
+
+      const data = await response.json();
+      setPreviousReading(curr);
+      setAmount((data.amount || 0).toFixed(2));
+      alert('Reading submitted successfully.');
+    } catch (error) {
+      console.error('Submit error:', error);
+      alert(error.message || 'Error submitting reading.');
     }
   };
 
@@ -164,10 +225,10 @@ function ScanReadings({ onLogout }) {
             </div>
 
             <div className="flex flex-col">
-              <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">Previous Month Reading:</label>
+                <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">Previous Month Reading:</label>
               <input
                 type="text"
-                value={previousReading + ' kwh'}
+                value={previousReading ? `${previousReading} kwh` : '0 kwh'}
                 readOnly
                 className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-200 text-slate-600 cursor-not-allowed text-sm md:text-base"
               />
@@ -215,11 +276,11 @@ function ScanReadings({ onLogout }) {
               <div className="flex flex-col">
                 <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">Current Reading:</label>
                 <input
-                  type="text"
+                  type="number"
                   value={currentReading}
-                  readOnly
+                  onChange={(e) => handleCurrentReadingChange(e.target.value)}
                   className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-green-100 border-2 border-green-300 text-slate-700 font-semibold text-sm md:text-base"
-                  placeholder="Reading will appear here"
+                  placeholder="Enter or scan current reading"
                 />
               </div>
               <div className="flex flex-col">
@@ -236,6 +297,7 @@ function ScanReadings({ onLogout }) {
 
             <button
               className="w-full bg-gradient-to-r from-slate-800 to-black text-white font-bold py-3 md:py-4 px-4 md:px-6 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 text-sm md:text-base"
+              onClick={handleSubmitReading}
             >
               ✓ Submit Reading
             </button>

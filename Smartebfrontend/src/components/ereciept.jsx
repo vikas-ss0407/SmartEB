@@ -33,16 +33,28 @@ function EReceipt({ onLogout }) {
     doc.save(`e-receipt-${data.consumerNo}.pdf`);
   };
 
+  const formatDate = (value) => {
+    if (!value) return 'N/A';
+    const d = new Date(value);
+    if (Number.isNaN(d.getTime())) return 'N/A';
+    return d.toISOString().split('T')[0];
+  };
+
   const fetchReceipt = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/receipts/${consumerNo}`);
+      const response = await fetch(`http://localhost:5000/api/consumers/details/${consumerNo}`);
       if (!response.ok) {
-        throw new Error("Receipt not found");
+        throw new Error('Receipt not found');
       }
       const data = await response.json();
-      setReceiptData(data);
+      setReceiptData({
+        consumerNo,
+        consumerName: data.name,
+        billAmount: data.amount ?? '0',
+        billPaidDate: formatDate(data.lastReadingDate),
+      });
     } catch (err) {
-      alert("Receipt not found for this consumer number.");
+      alert('Receipt not found for this consumer number.');
       setReceiptData(null);
     }
   };
