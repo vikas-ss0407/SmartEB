@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Tesseract from 'tesseract.js';
 
-function ScanReadings() {
+function ScanReadings({ onLogout }) {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [consumerNo, setConsumerNo] = useState('');
   const [consumerName, setConsumerName] = useState('');
@@ -17,26 +17,23 @@ function ScanReadings() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedName = localStorage.getItem('userName');
-    if (storedName) {
-      setUserName(storedName);
-    }
+    const storedName = localStorage.getItem('userName') || 'Guest User';
+    setUserName(storedName);
   }, []);
 
   const startCamera = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-
       setTimeout(() => {
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           setIsCameraOpen(true);
         } else {
-          console.error("Video element not found");
+          console.error('Video element not found');
         }
       }, 100);
     } catch (err) {
-      console.error("Error accessing camera: ", err);
+      console.error('Error accessing camera:', err);
     }
   };
 
@@ -48,164 +45,208 @@ function ScanReadings() {
     setIsCameraOpen(false);
   };
 
+  // UI-only update: no manual current reading handler changes
+
   const captureImage = () => {
-    const context = canvasRef.current.getContext('2d');
+    const context = canvasRef.current?.getContext('2d');
+    if (!context || !videoRef.current || !canvasRef.current) return;
+
     context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
     const imageData = canvasRef.current.toDataURL();
 
     Tesseract.recognize(imageData, 'eng')
       .then(({ data: { text } }) => {
         const extracted = parseFloat(text.match(/[\d.]+/g)?.[0] || 0).toFixed(2);
-        setCurrentReading(`${extracted}`);
+        setCurrentReading(`${extracted} kwh`);
         const prev = parseFloat(previousReading) || 0;
-        const curr = parseFloat(extracted);
+        const curr = parseFloat(extracted) || 0;
         const units = curr - prev;
         setAmount((units * tariff).toFixed(2));
         stopCamera();
       })
       .catch(err => {
-        console.error("OCR error:", err);
+        console.error('OCR error:', err);
         stopCamera();
       });
   };
 
   const fetchConsumerDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/consumers/${consumerNo}`);
-      if (!response.ok) {
-        throw new Error('Consumer not found');
-      }
+      const response = await fetch(`http://localhost:5000/api/consumer/${consumerNo}`);
+      if (!response.ok) throw new Error('Consumer not found');
       const data = await response.json();
-  
-      console.log('Fetched Consumer Data:', data); // Debugging: Log the response
-  
-      setConsumerName(data.name);
-      setMeterNo(data.meterSerialNumber);
-      setPreviousReading(data.previousReading || 0); // Set the previous reading from the backend
-      setTariff(data.tariffPlan); // Assuming tariffPlan is needed for calculations
+      setConsumerName(data.name || '');
+      setMeterNo(data.meterNo || '');
+      setPreviousReading(data.previousReading || '');
+      setTariff(data.tariff || 0);
     } catch (error) {
-      console.error("Fetch error:", error);
-      alert("Consumer not found.");
+      console.error('Fetch error:', error);
+      alert('Consumer not found.');
     }
   };
 
+  // UI-only update: no submit handler added/changed
+
   const handleLogout = () => {
-    localStorage.clear(); // Clear all user-related data
-    navigate('/login'); // Redirect to login page
-  };
-
-  const handleCurrentReadingChange = (e) => {
-    const newReading = e.target.value;
-    setCurrentReading(newReading);
-
-    // Calculate the amount based on the new reading
-    const prev = parseFloat(previousReading) || 0;
-    const curr = parseFloat(newReading) || 0;
-    const units = curr - prev;
-    setAmount((units * tariff).toFixed(2));
-  };
-
-  const submitCitizenReading = async () => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/consumers/citizen/update-reading/${consumerNo}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ unitsConsumed: parseFloat(currentReading), readingDate: new Date() }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update reading');
-      }
-
-      const data = await response.json();
-      alert(data.message);
-    } catch (error) {
-      console.error('Error submitting reading:', error);
-      alert('Failed to update reading');
+    if (onLogout) {
+      onLogout();
+    } else {
+      localStorage.clear();
+      navigate('/login');
     }
   };
 
   return (
-    <div className="scan-readings-page min-h-screen bg-gray-50">
-      <div className="top-nav flex items-center justify-between px-4 py-3 bg-white shadow">
-        <div className="home-button">
-          <span role="img" aria-label="scan">📷</span> Scan Readings
-        </div>
-        <div className="user-info flex items-center gap-3">
-          Hi {userName}, Welcome!
-          <button className="logout-button px-3 py-1.5 bg-red-500 text-white rounded hover:bg-red-600" onClick={handleLogout}>Logout →</button>
+    <div className="min-h-screen bg-gradient-to-b from-slate-400 to-slate-600 flex flex-col">
+      <div className="bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg p-3 md:p-4">
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
+          <div className="text-white font-bold text-base md:text-lg flex items-center gap-2">
+            <span className="text-xl md:text-2xl">📷</span> Scan Readings
+          </div>
+          <div className="text-white flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <span className="font-semibold text-sm md:text-base text-center">Hi {userName}, Welcome!</span>
+            <button
+              onClick={handleLogout}
+              className="bg-red-600 hover:bg-red-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-all duration-300 w-full sm:w-auto"
+            >
+              Logout →
+            </button>
+          </div>
         </div>
       </div>
 
-      <div className="scan-readings-container max-w-3xl mx-auto p-6">
-        <div className="form-area bg-white shadow rounded-lg p-6 space-y-4">
-          <div className="input-row">
-            <label htmlFor="consumerNo">Consumer No :</label>
-            <input
-              type="text"
-              id="consumerNo"
-              value={consumerNo}
-              onChange={e => setConsumerNo(e.target.value)}
-              className="mt-1 w-full px-3 py-2 border border-gray-300 rounded"
-            />
-            <button className="enter-button px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700" onClick={fetchConsumerDetails}>Enter</button>
-          </div>
+      <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6">
+        <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl border-2 border-teal-400 p-4 sm:p-6 md:p-8 w-full max-w-2xl">
+          <h2 className="text-xl md:text-2xl font-bold text-slate-700 mb-4 md:mb-6 text-center">📋 Enter Meter Details</h2>
 
-          <div className="input-row">
-            <label htmlFor="consumerName">Consumer Name :</label>
-            <input type="text" value={consumerName} readOnly />
-            <label className="meter-no-label">Meter No :</label>
-            <input type="text" value={meterNo} readOnly />
-          </div>
-
-          <div className="input-row">
-            <label>Previous Month Reading :</label>
-            <input type="text" value={previousReading + ' kwh'} readOnly />
-          </div>
-
-          <div className="input-row">
-            <label>Current Reading :</label>
-            <input
-              type="text"
-              value={currentReading}
-              onChange={handleCurrentReadingChange}
-              placeholder="Enter Current Reading"
-            />
-          </div>
-
-          <div className="input-row">
-            <label>Scan Readings :</label>
-            <button className="scan-button" onClick={startCamera}>Click Here to Scan</button>
-            <span className="camera-icon">📸</span>
-          </div>
-
-          <div className="camera-container" style={{ display: isCameraOpen ? 'block' : 'none' }}>
-            <video
-              ref={videoRef}
-              width="100%"
-              autoPlay
-              muted
-              playsInline
-            />
-            <div className="mt-3 flex gap-3">
-              <button className="capture-button px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700" onClick={captureImage}>Take Photo</button>
-              <button className="stop-button px-3 py-2 bg-gray-200 text-gray-900 rounded hover:bg-gray-300" onClick={stopCamera}>Stop Camera</button>
+          <div className="space-y-4 md:space-y-5">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex-1 flex flex-col">
+                <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">Consumer No:</label>
+                <input
+                  type="text"
+                  id="consumerNo"
+                  value={consumerNo}
+                  onChange={e => setConsumerNo(e.target.value)}
+                  className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-100 border-2 border-transparent focus:border-teal-400 focus:bg-white outline-none transition-all text-sm md:text-base"
+                  placeholder="Enter consumer number"
+                />
+              </div>
+              <div className="flex items-end">
+                <button
+                  className="bg-gradient-to-r from-teal-500 to-teal-700 text-white font-bold py-2 md:py-3 px-4 md:px-6 rounded-lg hover:shadow-lg transition-all duration-300 w-full sm:w-auto text-sm md:text-base"
+                  onClick={fetchConsumerDetails}
+                >
+                  Enter
+                </button>
+              </div>
             </div>
-            <canvas ref={canvasRef} width="640" height="480" style={{ display: 'none' }} />
-          </div>
 
-          <div className="input-row">
-            <label>Amount :</label>
-            <input type="text" value={amount} readOnly />
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">Consumer Name:</label>
+                <input
+                  type="text"
+                  value={consumerName}
+                  readOnly
+                  className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-200 text-slate-600 cursor-not-allowed text-sm md:text-base"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">Meter No:</label>
+                <input
+                  type="text"
+                  value={meterNo}
+                  readOnly
+                  className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-200 text-slate-600 cursor-not-allowed text-sm md:text-base"
+                />
+              </div>
+            </div>
 
-          <button className="submit-button w-full px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700" onClick={submitCitizenReading}>Submit</button>
+            <div className="flex flex-col">
+              <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">Previous Month Reading:</label>
+              <input
+                type="text"
+                value={previousReading + ' kwh'}
+                readOnly
+                className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-200 text-slate-600 cursor-not-allowed text-sm md:text-base"
+              />
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-4 md:p-6 rounded-lg border-2 border-blue-300">
+              <label className="text-slate-700 font-semibold mb-2 md:mb-3 block text-sm md:text-base">📸 Scan Readings:</label>
+
+              {!isCameraOpen ? (
+                <button
+                  className="w-full bg-gradient-to-r from-blue-500 to-blue-700 text-white font-bold py-3 md:py-4 px-4 md:px-6 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 text-sm md:text-base"
+                  onClick={startCamera}
+                >
+                  📷 Click Here to Scan
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <video
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    playsInline
+                    className="w-full rounded-lg border-2 border-blue-400"
+                  />
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <button
+                      className="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-2 md:py-3 rounded-lg transition-all text-sm md:text-base"
+                      onClick={captureImage}
+                    >
+                      ✓ Take Photo
+                    </button>
+                    <button
+                      className="flex-1 bg-red-500 hover:bg-red-600 text-white font-bold py-2 md:py-3 rounded-lg transition-all text-sm md:text-base"
+                      onClick={stopCamera}
+                    >
+                      ✕ Stop Camera
+                    </button>
+                  </div>
+                  <canvas ref={canvasRef} width="640" height="480" className="hidden" />
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col">
+                <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">Current Reading:</label>
+                <input
+                  type="text"
+                  value={currentReading}
+                  readOnly
+                  className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-green-100 border-2 border-green-300 text-slate-700 font-semibold text-sm md:text-base"
+                  placeholder="Reading will appear here"
+                />
+              </div>
+              <div className="flex flex-col">
+                <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">Amount (₹):</label>
+                <input
+                  type="text"
+                  value={amount}
+                  readOnly
+                  className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-amber-100 border-2 border-amber-300 text-slate-700 font-semibold text-sm md:text-base"
+                  placeholder="Amount will appear here"
+                />
+              </div>
+            </div>
+
+            <button
+              className="w-full bg-gradient-to-r from-slate-800 to-black text-white font-bold py-3 md:py-4 px-4 md:px-6 rounded-lg hover:shadow-lg transform hover:scale-105 transition-all duration-300 text-sm md:text-base"
+            >
+              ✓ Submit Reading
+            </button>
+          </div>
         </div>
-        <div className="footer bg-white border-t p-4 text-center text-sm text-gray-600">
-          <p>&copy; 2025 ScanReadings Inc. All rights reserved.</p>
-          <a className="text-blue-600 hover:underline" href="/privacy-policy">Privacy Policy</a> | <a className="text-blue-600 hover:underline" href="/terms-of-service">Terms of Service</a>
+      </div>
+
+      <div className="bg-slate-900 text-white text-center py-3 md:py-4 border-t-2 border-slate-700">
+        <p className="text-xs md:text-sm px-2">&copy; 2025 ScanReadings Inc. All rights reserved.</p>
+        <div className="text-xs mt-1 md:mt-2 px-2">
+          <a href="/privacy-policy" className="hover:text-teal-400">Privacy Policy</a> | <a href="/terms-of-service" className="hover:text-teal-400">Terms of Service</a>
         </div>
       </div>
     </div>
