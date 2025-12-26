@@ -156,7 +156,7 @@ function About() {
 
       {/* Footer */}
       <div className="bg-slate-900 text-white text-center py-3 md:py-4 border-t-2 border-slate-700">
-        <p className="text-xs md:text-sm px-2">&copy; 2025 ScanReadings Inc. All rights reserved.</p>
+        <p className="text-xs md:text-sm px-2">&copy; 2025 scanReadings Inc. All rights reserved.</p>
         <div className="text-xs mt-1 md:mt-2 px-2">
           <a href="/privacy-policy" className="hover:text-teal-400">Privacy Policy</a> | <a href="/terms-of-service" className="hover:text-teal-400">Terms of Service</a>
         </div>
