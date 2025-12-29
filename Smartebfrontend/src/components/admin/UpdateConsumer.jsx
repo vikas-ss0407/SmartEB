@@ -1,6 +1,18 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import { 
+  ArrowLeft, 
+  UserCog, 
+  Search, 
+  User, 
+  MapPin, 
+  Phone, 
+  ShieldCheck, 
+  Cpu,
+  CheckCircle2, 
+  AlertCircle 
+} from 'lucide-react';
 
 function UpdateConsumer() {
   const navigate = useNavigate();
@@ -12,131 +24,207 @@ function UpdateConsumer() {
     tariffPlan: '',
     meterSerialNumber: '',
   });
-  const [message, setMessage] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [status, setStatus] = useState({ type: '', msg: '' });
+  const [isFetching, setIsFetching] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const handleFetchConsumer = async () => {
+    if (!consumerNumber) return;
+    setIsFetching(true);
+    setStatus({ type: '', msg: '' });
+    
     try {
       const response = await axios.get(`http://localhost:5000/api/consumers/${consumerNumber}`);
       setConsumerData(response.data);
-      setMessage('');
-      setErrorMessage('');
     } catch (error) {
       console.error('Error fetching consumer:', error);
-      setErrorMessage('Consumer not found!');
-      setConsumerData({
-        name: '',
-        address: '',
-        phoneNumber: '',
-        tariffPlan: '',
-        meterSerialNumber: '',
-      });
+      setStatus({ type: 'error', msg: 'Record not found. Verify Consumer ID.' });
+      setConsumerData({ name: '', address: '', phoneNumber: '', tariffPlan: '', meterSerialNumber: '' });
+    } finally {
+      setIsFetching(false);
     }
   };
 
   const handleUpdateConsumer = async (e) => {
     e.preventDefault();
+    setIsUpdating(true);
     try {
-      const response = await axios.put(`http://localhost:5000/api/consumers/${consumerNumber}`, consumerData);
-      setMessage('Consumer updated successfully!');
-      setErrorMessage('');
+      await axios.put(`http://localhost:5000/api/consumers/${consumerNumber}`, consumerData);
+      setStatus({ type: 'success', msg: 'Telemetry profile updated successfully!' });
     } catch (error) {
       console.error('Error updating consumer:', error);
-      setErrorMessage('Failed to update consumer. Please try again.');
+      setStatus({ type: 'error', msg: 'Failed to synchronize updates.' });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-400 to-slate-600 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl bg-white rounded-xl shadow-2xl border-2 border-teal-400 p-6 md:p-8">
-        <h2 className="text-2xl md:text-3xl font-bold text-slate-800 mb-6 text-center">✏️ Update Consumer</h2>
+    <div className="min-h-screen bg-[#f8fafc] font-sans flex flex-col items-center justify-center py-12 px-6">
+      
+      {/* Back Button */}
+      <div className="w-full max-w-2xl mb-8">
+        <button 
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-2 text-slate-500 hover:text-slate-800 font-bold text-sm transition-colors"
+        >
+          <ArrowLeft size={18} /> Back to Dashboard
+        </button>
+      </div>
 
-        <div className="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-4">
-          <div className="flex flex-col md:flex-row gap-3">
-            <input
-              type="text"
-              placeholder="Enter Consumer Number"
-              value={consumerNumber}
-              onChange={(e) => setConsumerNumber(e.target.value)}
-              className="flex-1 px-4 py-3 rounded-lg bg-white border-2 border-transparent focus:border-teal-400 outline-none"
-            />
-            <button onClick={handleFetchConsumer} className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">Fetch Consumer</button>
+      <div className="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-xl shadow-slate-200/60 border border-slate-200 relative">
+        
+        {/* Floating Icon */}
+        <div className="absolute -top-10 left-1/2 -translate-x-1/2 z-10">
+          <div className="bg-teal-500 w-20 h-20 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-teal-500/40 border-4 border-white">
+            <UserCog size={38} strokeWidth={2.5} />
           </div>
-          {errorMessage && <p className="mt-2 px-3 py-2 bg-red-100 text-red-700 rounded">{errorMessage}</p>}
-          {message && <p className="mt-2 px-3 py-2 bg-green-100 text-green-700 rounded">{message}</p>}
         </div>
 
-        {consumerData.name && (
-          <form onSubmit={handleUpdateConsumer} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col">
-                <label className="text-slate-700 font-semibold mb-1">Name</label>
-                <input
-                  type="text"
-                  placeholder="Name"
-                  value={consumerData.name}
-                  onChange={(e) => setConsumerData({ ...consumerData, name: e.target.value })}
-                  required
-                  className="px-4 py-3 rounded-lg bg-gray-100 border-2 border-transparent focus:border-teal-400 focus:bg-white outline-none"
-                />
-              </div>
-              <div className="flex flex-col">
-                <label className="text-slate-700 font-semibold mb-1">Phone Number</label>
-                <input
-                  type="text"
-                  placeholder="Phone Number"
-                  value={consumerData.phoneNumber}
-                  onChange={(e) => setConsumerData({ ...consumerData, phoneNumber: e.target.value })}
-                  required
-                  className="px-4 py-3 rounded-lg bg-gray-100 border-2 border-transparent focus:border-teal-400 focus:bg-white outline-none"
-                />
-              </div>
-            </div>
+        {/* Header Section */}
+        <div className="bg-slate-900 pt-16 pb-10 px-8 text-center rounded-t-[2.5rem] overflow-hidden">
+          <h2 className="text-2xl font-black text-white tracking-tight">Modify Consumer</h2>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Update Service Point Records</p>
+        </div>
 
-            <div className="flex flex-col">
-              <label className="text-slate-700 font-semibold mb-1">Address</label>
+        <div className="p-8 md:p-12">
+          {/* Step 1: Search Bar */}
+          <div className="bg-slate-50 rounded-3xl p-3 mb-8 flex flex-col md:flex-row gap-3 border border-slate-100 shadow-inner">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
               <input
                 type="text"
-                placeholder="Address"
-                value={consumerData.address}
-                onChange={(e) => setConsumerData({ ...consumerData, address: e.target.value })}
-                required
-                className="px-4 py-3 rounded-lg bg-gray-100 border-2 border-transparent focus:border-teal-400 focus:bg-white outline-none"
+                placeholder="Search Consumer ID..."
+                value={consumerNumber}
+                onChange={(e) => setConsumerNumber(e.target.value)}
+                className="w-full pl-12 pr-4 py-3 rounded-2xl bg-white border-none focus:ring-2 focus:ring-teal-500/20 text-slate-800 font-bold outline-none transition-all"
               />
             </div>
+            <button 
+              onClick={handleFetchConsumer}
+              disabled={isFetching}
+              className="bg-slate-800 hover:bg-black text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all disabled:opacity-50"
+            >
+              {isFetching ? 'Locating...' : 'Fetch'}
+            </button>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col">
-                <label className="text-slate-700 font-semibold mb-1">Tariff Plan</label>
-                <select
-                  value={consumerData.tariffPlan}
-                  onChange={(e) => setConsumerData({ ...consumerData, tariffPlan: e.target.value })}
-                  required
-                  className="px-4 py-3 rounded-lg bg-gray-100 border-2 border-transparent focus:border-teal-400 focus:bg-white outline-none"
-                >
-                  <option value="">Select Tariff Plan</option>
-                  <option value="Domestic">Domestic</option>
-                  <option value="Commercial">Commercial</option>
-                  <option value="Industrial">Industrial</option>
-                </select>
-              </div>
-              <div className="flex flex-col">
-                <label className="text-slate-700 font-semibold mb-1">Meter Serial Number</label>
-                <input
-                  type="text"
-                  placeholder="Meter Serial Number"
-                  value={consumerData.meterSerialNumber}
-                  onChange={(e) => setConsumerData({ ...consumerData, meterSerialNumber: e.target.value })}
-                  required
-                  className="px-4 py-3 rounded-lg bg-gray-100 border-2 border-transparent focus:border-teal-400 focus:bg-white outline-none"
-                />
-              </div>
+          {/* Status Notifications */}
+          {status.msg && (
+            <div className={`mb-8 p-4 rounded-2xl flex items-center gap-3 text-sm font-bold border animate-in slide-in-from-top-2 duration-300 ${
+              status.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-rose-50 text-rose-700 border-rose-100'
+            }`}>
+              {status.type === 'success' ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
+              {status.msg}
             </div>
+          )}
 
-            <button type="submit" className="w-full bg-gradient-to-r from-teal-500 to-teal-700 text-white font-bold py-3 rounded-lg hover:shadow-lg transition-all">Update Consumer</button>
-          </form>
-        )}
+          {/* Step 2: Update Form (Conditionally Rendered) */}
+          {consumerData.name && (
+            <form onSubmit={handleUpdateConsumer} className="space-y-6 animate-in fade-in duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Full Name</label>
+                  <div className="relative group">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+                    <input
+                      type="text"
+                      value={consumerData.name}
+                      onChange={(e) => setConsumerData({ ...consumerData, name: e.target.value })}
+                      required
+                      className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-teal-500/20 focus:bg-white transition-all text-slate-800 font-bold outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Contact Phone</label>
+                  <div className="relative group">
+                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+                    <input
+                      type="text"
+                      value={consumerData.phoneNumber}
+                      onChange={(e) => setConsumerData({ ...consumerData, phoneNumber: e.target.value })}
+                      required
+                      className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-teal-500/20 focus:bg-white transition-all text-slate-800 font-bold outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Service Address</label>
+                <div className="relative group">
+                  <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+                  <input
+                    type="text"
+                    value={consumerData.address}
+                    onChange={(e) => setConsumerData({ ...consumerData, address: e.target.value })}
+                    required
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-teal-500/20 focus:bg-white transition-all text-slate-800 font-bold outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tariff Plan</label>
+                  <div className="relative group">
+                    <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+                    <select
+                      value={consumerData.tariffPlan}
+                      onChange={(e) => setConsumerData({ ...consumerData, tariffPlan: e.target.value })}
+                      required
+                      className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-teal-500/20 focus:bg-white transition-all text-slate-800 font-bold outline-none appearance-none"
+                    >
+                      <option value="Domestic">Domestic</option>
+                      <option value="Commercial">Commercial</option>
+                      <option value="Industrial">Industrial</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Meter Serial</label>
+                  <div className="relative group">
+                    <Cpu className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-teal-500 transition-colors" size={18} />
+                    <input
+                      type="text"
+                      value={consumerData.meterSerialNumber}
+                      onChange={(e) => setConsumerData({ ...consumerData, meterSerialNumber: e.target.value })}
+                      required
+                      className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-teal-500/20 focus:bg-white transition-all text-slate-800 font-bold outline-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isUpdating}
+                className={`w-full py-5 rounded-2xl font-black text-xs uppercase tracking-[0.2em] transition-all shadow-xl active:scale-[0.98] mt-4 ${
+                  isUpdating 
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed' 
+                  : 'bg-teal-600 text-white hover:bg-teal-700 shadow-teal-600/30'
+                }`}
+              >
+                {isUpdating ? 'Synchronizing...' : 'Commit Changes'}
+              </button>
+            </form>
+          )}
+
+          {!consumerData.name && !status.msg && (
+            <div className="py-12 text-center text-slate-300">
+              <Search size={48} className="mx-auto mb-4 opacity-20" />
+              <p className="font-bold text-sm uppercase tracking-widest">Awaiting Consumer ID</p>
+            </div>
+          )}
+        </div>
       </div>
+
+      <p className="mt-8 text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em]">
+        GridVision Administrative Portal
+      </p>
     </div>
   );
 }

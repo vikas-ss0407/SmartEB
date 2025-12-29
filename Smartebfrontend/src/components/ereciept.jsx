@@ -1,17 +1,143 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { jsPDF } from 'jspdf';
+import { useNavigate, useLocation } from 'react-router-dom';
+import jsPDF  from 'jspdf';
+import { getBillSummary } from '../api/consumerApi';
+import NotificationWidget from './Notifications';
 
 function EReceipt({ onLogout }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [consumerNo, setConsumerNo] = useState('');
-  const [receiptData, setReceiptData] = useState(null);
+  const [billSummary, setBillSummary] = useState(null);
   const [userName, setUserName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   useEffect(() => {
     const storedName = localStorage.getItem('userName') || 'Guest User';
     setUserName(storedName);
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Professional Logic-based Badge Styling
+  const getStatusConfig = (status) => {
+    const configs = {
+      Paid: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', glow: 'shadow-[0_0_15px_rgba(16,185,129,0.1)]' },
+      Overdue: { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', glow: 'shadow-[0_0_15px_rgba(244,63,94,0.1)]' },
+      Pending: { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', glow: 'shadow-[0_0_15px_rgba(245,158,11,0.1)]' },
+    };
+    return configs[status] || { bg: 'bg-slate-50', text: 'text-slate-700', border: 'border-slate-200', glow: '' };
+  };
+
+  const getNotificationStyles = (severity) => {
+    switch (severity) {
+      case 'success': return 'bg-emerald-50/80 border-emerald-200 text-emerald-900 shadow-sm';
+      case 'info': return 'bg-sky-50/80 border-sky-200 text-sky-900 shadow-sm';
+      case 'urgent': return 'bg-orange-50/80 border-orange-200 text-orange-900 shadow-sm';
+      case 'warning': return 'bg-amber-50/80 border-amber-200 text-amber-900 shadow-sm';
+      case 'overdue': return 'bg-rose-50/80 border-rose-200 text-rose-900 shadow-sm animate-pulse';
+      default: return 'bg-white border-slate-200 text-slate-900';
+    }
+  };
+
+  const formatDateTime = (date) => {
+    const options = {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: true
+    };
+    return date.toLocaleDateString('en-US', options);
+  };
+
+  const formatShortDate = (value) => {
+    if (!value) return 'N/A';
+    return new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  const formatCurrency = (value) => `₹${Number(value ?? 0).toFixed(2)}`;
+
+  const buildNotifications = (summary) => {
+    if (!summary) return [];
+    const notifications = [];
+
+    if (summary.paymentStatus === 'Paid') {
+      notifications.push({
+        id: 'payment-success',
+        title: 'Payment Confirmed',
+        detail: summary.lastPaymentDate
+          ? `Payment cleared on ${formatShortDate(summary.lastPaymentDate)}.`
+          : 'Payment recorded successfully.',
+        severity: 'success',
+        icon: '✅'
+      });
+      notifications.push({
+        id: 'next-cycle',
+        title: 'Next Billing Cycle',
+        detail: `Next due date: ${formatShortDate(summary.nextPaymentDeadline)}.`,
+        severity: 'info',
+        icon: '📅'
+      });
+    } else {
+      const days = summary.daysUntilDeadline;
+      if (summary.isOverdue) {
+        notifications.push({
+          id: 'overdue',
+          title: 'Payment Overdue',
+          detail: `Overdue by ${Math.abs(days)} day(s). Settle ₹${formatCurrency(summary.totalAmountDue)} to avoid extra penalties.`,
+          severity: 'overdue',
+          icon: '🚨'
+        });
+      } else if (days <= 3) {
+        notifications.push({
+          id: 'urgent',
+          title: 'Urgent Reminder',
+          detail: `Only ${days} day(s) left. Due on ${formatShortDate(summary.nextPaymentDeadline)}.`,
+          severity: 'urgent',
+          icon: '⏰'
+        });
+      } else if (days <= 7) {
+        notifications.push({
+          id: 'warning',
+          title: 'Upcoming Due Date',
+          detail: `Bill due in ${days} day(s) (${formatShortDate(summary.nextPaymentDeadline)}).`,
+          severity: 'warning',
+          icon: '🟡'
+        });
+      } else {
+        notifications.push({
+          id: 'notice',
+          title: 'Payment Scheduled',
+          detail: `Next due date is ${formatShortDate(summary.nextPaymentDeadline)} (${days} days remaining).`,
+          severity: 'info',
+          icon: '🔔'
+        });
+      }
+    }
+
+    if (summary.isFineApplied) {
+      notifications.push({
+        id: 'fine',
+        title: 'Fine Applied',
+        detail: `Late fee ₹${formatCurrency(summary.fineDetails.totalFineWithTax)} has been added.`,
+        severity: 'overdue',
+        icon: '⚠️'
+      });
+    }
+
+    return notifications;
+  };
 
   const handleLogout = () => {
     if (onLogout) {
@@ -22,142 +148,313 @@ function EReceipt({ onLogout }) {
     }
   };
 
-  const handleDownload = (data) => {
-    const doc = new jsPDF();
-    doc.setFontSize(12);
-    doc.text('E-Receipt', 20, 20);
-    doc.text(`Consumer No: ${data.consumerNo}`, 20, 30);
-    doc.text(`Consumer Name: ${data.consumerName}`, 20, 40);
-    doc.text(`Bill Amount: ${data.billAmount}`, 20, 50);
-    doc.text(`Bill Paid Date: ${data.billPaidDate}`, 20, 60);
-    doc.save(`e-receipt-${data.consumerNo}.pdf`);
-  };
+  const notifications = billSummary ? buildNotifications(billSummary) : [];
 
-  const formatDate = (value) => {
-    if (!value) return 'N/A';
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return 'N/A';
-    return d.toISOString().split('T')[0];
-  };
+  const fetchBillSummary = async (overrideConsumerNo) => {
+    const targetConsumer = (overrideConsumerNo ?? consumerNo).trim();
 
-  const fetchReceipt = async () => {
+    if (!targetConsumer) {
+      setError('Please enter a valid consumer number');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setBillSummary(null);
+
     try {
-      const response = await fetch(`http://localhost:5000/api/consumers/details/${consumerNo}`);
-      if (!response.ok) {
-        throw new Error('Receipt not found');
-      }
-      const data = await response.json();
-      setReceiptData({
-        consumerNo,
-        consumerName: data.name,
-        billAmount: data.amount ?? '0',
-        billPaidDate: formatDate(data.lastReadingDate),
-      });
+      const data = await getBillSummary(targetConsumer);
+      setBillSummary(data);
     } catch (err) {
-      alert('Receipt not found for this consumer number.');
-      setReceiptData(null);
+      setError('Bill details not found for this consumer number. Please try again.');
+      console.error('Error fetching bill summary:', err);
+    } finally {
+      setLoading(false);
     }
   };
 
+  // If navigated from payment/quickpay with a consumer number, auto-load that receipt
+  useEffect(() => {
+    if (location.state && location.state.consumerNo) {
+      const fromConsumer = String(location.state.consumerNo);
+      setConsumerNo(fromConsumer);
+      fetchBillSummary(fromConsumer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
+
+  const handleDownloadPDF = (data) => {
+  try {
+    const doc = new jsPDF('p', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+    let y = 20;
+
+    const safeNum = (v) => Number(v ?? 0).toFixed(2);
+
+    doc.setFillColor(30, 41, 59);
+    doc.rect(0, 0, pageWidth, 32, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(18);
+    doc.text('GridVision', 20, 20);
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(10);
+    doc.text('Enterprise Electricity Billing Portal', 20, 26);
+
+    y = 42;
+
+    const row = (l, v) => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+      doc.text(l, 20, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(v ?? 'N/A'), 90, y);
+      y += 6;
+    };
+
+    row('Consumer Number', data.consumerNumber);
+    row('Consumer Name', data.name);
+    row('Bill Amount', `Rs. ${safeNum(data.billAmount)}`);
+    row('Units Consumed', `${data.currentReading ?? 0}`);
+    row('Payment Status', data.paymentStatus);
+    row('Total Payable', `Rs. ${safeNum(data.totalAmountDue)}`);
+
+    doc.save(`GridVision_E-Receipt_${data.consumerNumber}.pdf`);
+  } catch (e) {
+    console.error(e);
+    alert('Unable to generate PDF. Please try again.');
+  }
+};
+
+  const getReminderColor = (reminderType) => {
+    switch (reminderType) {
+      case 'overdue':
+        return 'bg-red-100 border-red-400';
+      case 'urgent':
+        return 'bg-orange-100 border-orange-400';
+      case 'warning':
+        return 'bg-yellow-100 border-yellow-400';
+      case 'notice':
+        return 'bg-blue-100 border-blue-400';
+      default:
+        return 'bg-gray-100 border-gray-400';
+    }
+  };
+
+  const getReminderIcon = (reminderType) => {
+    switch (reminderType) {
+      case 'overdue':
+        return '🚨';
+      case 'urgent':
+        return '🔴';
+      case 'warning':
+        return '🟡';
+      case 'notice':
+        return 'ℹ️';
+      default:
+        return '📋';
+    }
+  };
+  // Logic functions (buildNotifications, fetchBillSummary, handleDownloadPDF) stay exactly as provided...
+  // [Placeholder for your existing logic functions]
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-400 to-slate-600 flex flex-col">
-      {/* Top Navigation */}
-      <div className="bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg p-3 md:p-4">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
-          <div className="text-white font-bold text-base md:text-lg flex items-center gap-2">
-            <span className="text-xl md:text-2xl">🧾</span> E-Receipt
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
+      {/* Premium Navigation */}
+      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-2.5 rounded-xl shadow-lg shadow-indigo-200">
+              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div>
+              <span className="text-lg font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">GridVision</span>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Enterprise Portal</p>
+            </div>
           </div>
-          <div className="text-white flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-            <span className="font-semibold text-sm md:text-base text-center">Hi {userName}, Welcome!</span>
+          
+          <div className="flex items-center gap-6">
+            <div className="hidden lg:block text-right">
+              <p className="text-sm font-bold text-slate-800">{userName}</p>
+              <p className="text-xs text-slate-400">{formatDateTime(currentDateTime)}</p>
+            </div>
             <button
               onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-all duration-300 w-full sm:w-auto"
+              className="group flex items-center gap-2 bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-600 px-4 py-2 rounded-xl text-sm font-bold transition-all border border-slate-200 hover:border-rose-200"
             >
-              Logout →
+              Sign Out
+              <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
             </button>
           </div>
         </div>
-      </div>
+      </nav>
 
-      {/* Main Form Area */}
-      <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6">
-        <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl border-2 border-amber-400 p-4 sm:p-6 md:p-8 w-full max-w-3xl">
-          <h2 className="text-xl md:text-2xl font-bold text-slate-700 mb-4 md:mb-6 text-center">📄 Retrieve Your E-Receipt</h2>
+      <NotificationWidget consumerNo={consumerNo} />
 
-          <div className="space-y-4 md:space-y-6">
-            {/* Search Section */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex-1 flex flex-col">
-                <label htmlFor="consumerNo" className="text-slate-700 font-semibold mb-2 text-sm md:text-base">Consumer No:</label>
-                <input
-                  type="text"
-                  id="consumerNo"
-                  value={consumerNo}
-                  onChange={(e) => setConsumerNo(e.target.value)}
-                  placeholder="Enter your consumer number"
-                  className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-100 border-2 border-transparent focus:border-amber-400 focus:bg-white outline-none transition-all text-sm md:text-base"
-                />
+      <main className="flex-1 max-w-6xl w-full mx-auto p-4 md:p-10 space-y-10">
+        
+        {/* Extraordinary Search Section */}
+        <section className="relative overflow-hidden bg-slate-900 rounded-[2rem] p-8 md:p-12 shadow-2xl shadow-indigo-100">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl -mr-32 -mt-32"></div>
+          <div className="relative z-10 max-w-2xl">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-4 tracking-tight">Statement Explorer</h2>
+            <p className="text-indigo-200/70 mb-8 text-lg">Enter your consumer credentials to retrieve real-time billing analytics and official receipts.</p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 p-2 bg-white/10 backdrop-blur-xl rounded-2xl border border-white/10">
+              <input
+                type="text"
+                value={consumerNo}
+                onChange={(e) => setConsumerNo(e.target.value)}
+                placeholder="Consumer Identification Number"
+                className="flex-1 bg-transparent px-6 py-4 text-white placeholder:text-slate-400 focus:outline-none font-medium text-lg"
+              />
+              <button
+                onClick={() => fetchBillSummary()}
+                disabled={loading}
+                className="bg-indigo-500 hover:bg-indigo-400 text-white font-black px-10 py-4 rounded-xl transition-all shadow-xl shadow-indigo-500/20 active:scale-95 disabled:opacity-50"
+              >
+                {loading ? <span className="flex items-center gap-2"><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>Loading</span> : 'Fetch Details'}
+              </button>
+            </div>
+            {error && <div className="mt-4 flex items-center gap-2 text-rose-400 text-sm font-bold"><span className="w-2 h-2 bg-rose-400 rounded-full animate-ping"></span>{error}</div>}
+          </div>
+        </section>
+
+        {billSummary && (
+          <div className="animate-in fade-in slide-in-from-bottom-8 duration-700 space-y-8">
+            
+            {/* Logic-Driven Notification Grid */}
+            {notifications.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {notifications.map((note) => (
+                  <div key={note.id} className={`group flex items-start gap-4 p-5 rounded-2xl border transition-all hover:scale-[1.02] ${getNotificationStyles(note.severity)}`}>
+                    <div className="text-3xl filter drop-shadow-sm group-hover:scale-110 transition-transform">{note.icon}</div>
+                    <div>
+                      <h4 className="text-sm font-black uppercase tracking-wider mb-1">{note.title}</h4>
+                      <p className="text-xs font-medium leading-relaxed opacity-80">{note.detail}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-end">
+            )}
+
+            {/* Main Data Bento Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+              
+              {/* Consumer Analytics Card */}
+              <div className="lg:col-span-8 bg-white rounded-[2.5rem] border border-slate-200 shadow-sm overflow-hidden">
+                <div className="px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em]">Consumer Profile</h3>
+                  <span className="px-3 py-1 bg-white border border-slate-200 rounded-full text-[10px] font-bold text-slate-500 uppercase">Verified Account</span>
+                </div>
+                <div className="p-8 md:p-10">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Full Name</p>
+                      <p className="text-xl font-bold text-slate-900">{billSummary.name}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">ID Reference</p>
+                      <p className="text-xl font-bold text-slate-900">#{billSummary.consumerNumber}</p>
+                    </div>
+                    <div className="md:col-span-2 space-y-1">
+                      <p className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Service Address</p>
+                      <p className="text-slate-600 font-medium leading-relaxed">{billSummary.address}</p>
+                    </div>
+                    <div className="pt-4 flex flex-wrap gap-3">
+                      <span className="px-4 py-2 bg-slate-100 rounded-xl text-xs font-bold text-slate-600 border border-slate-200">Plan: {billSummary.tariffPlan}</span>
+                      <span className="px-4 py-2 bg-slate-100 rounded-xl text-xs font-bold text-slate-600 border border-slate-200">Meter: {billSummary.meterSerialNumber}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Financial Highlight Card */}
+              <div className="lg:col-span-4 flex flex-col gap-6">
+                <div className={`flex-1 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center border transition-all ${getStatusConfig(billSummary.paymentStatus).bg} ${getStatusConfig(billSummary.paymentStatus).border} ${getStatusConfig(billSummary.paymentStatus).glow}`}>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 mb-4">Current Payable</p>
+                  <div className="relative">
+                    <span className="absolute -left-6 top-2 text-xl font-bold text-slate-400">₹</span>
+                    <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
+                      {billSummary.paymentStatus === 'Paid' ? '0.00' : billSummary.totalAmountDue.toFixed(2)}
+                    </h2>
+                  </div>
+                  <div className={`mt-6 px-6 py-2 rounded-full text-[10px] font-black tracking-widest uppercase border ${getStatusConfig(billSummary.paymentStatus).text} ${getStatusConfig(billSummary.paymentStatus).border} bg-white shadow-sm`}>
+                    {billSummary.paymentStatus}
+                  </div>
+                </div>
+
                 <button
-                  className="bg-gradient-to-r from-amber-500 to-amber-700 text-white font-bold py-2 md:py-3 px-4 md:px-6 rounded-lg hover:shadow-lg transition-all duration-300 w-full sm:w-auto text-sm md:text-base"
-                  onClick={fetchReceipt}
+                  onClick={() => handleDownloadPDF(billSummary)}
+                  className="group bg-slate-900 hover:bg-indigo-600 text-white p-6 rounded-[2rem] font-bold flex flex-col items-center gap-2 transition-all shadow-xl hover:shadow-indigo-200"
                 >
-                  Search
+                  <svg className="w-6 h-6 group-hover:-translate-y-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M4 16v1a2 2 0 002 2h12a2 2 0 002-2v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  <span>Download Official PDF</span>
                 </button>
               </div>
             </div>
 
-            {/* Receipt Table */}
-            {receiptData && (
-              <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                  <thead>
-                    <tr className="bg-gradient-to-r from-amber-400 to-amber-600">
-                      <th className="px-2 md:px-4 py-2 md:py-3 text-white font-bold text-left border border-amber-700 text-xs md:text-sm">Consumer No</th>
-                      <th className="px-2 md:px-4 py-2 md:py-3 text-white font-bold text-left border border-amber-700 text-xs md:text-sm">Consumer Name</th>
-                      <th className="px-2 md:px-4 py-2 md:py-3 text-white font-bold text-left border border-amber-700 text-xs md:text-sm">Bill Amount (₹)</th>
-                      <th className="px-2 md:px-4 py-2 md:py-3 text-white font-bold text-left border border-amber-700 text-xs md:text-sm">Bill Paid Date</th>
-                      <th className="px-2 md:px-4 py-2 md:py-3 text-white font-bold text-center border border-amber-700 text-xs md:text-sm">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="hover:bg-amber-50 transition-colors">
-                      <td className="px-2 md:px-4 py-2 md:py-3 border border-gray-300 font-semibold text-slate-700 text-xs md:text-sm">{receiptData.consumerNo}</td>
-                      <td className="px-2 md:px-4 py-2 md:py-3 border border-gray-300 text-slate-700 text-xs md:text-sm">{receiptData.consumerName}</td>
-                      <td className="px-2 md:px-4 py-2 md:py-3 border border-gray-300 font-bold text-amber-600 text-xs md:text-sm">{receiptData.billAmount}</td>
-                      <td className="px-2 md:px-4 py-2 md:py-3 border border-gray-300 text-slate-700 text-xs md:text-sm">{receiptData.billPaidDate}</td>
-                      <td className="px-2 md:px-4 py-2 md:py-3 border border-gray-300 text-center">
-                        <button
-                          className="bg-green-500 hover:bg-green-600 text-white font-bold py-1.5 md:py-2 px-2 md:px-4 rounded-lg transition-all duration-300 transform hover:scale-105 text-xs md:text-sm"
-                          onClick={() => handleDownload(receiptData)}
-                        >
-                          ⬇️ Download PDF
-                        </button>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            )}
+            {/* Detailed Analytics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {[
+                { label: 'Cycle Period', value: `${billSummary.billCycleDays} Days`, sub: 'Standard Cycle', icon: '🗓️' },
+                { label: 'Consumption', value: `${billSummary.currentReading}`, sub: 'Units Consumed', icon: '⚡' },
+                { label: 'Last Activity', value: billSummary.lastPaymentDate ? formatShortDate(billSummary.lastPaymentDate) : 'No Records', sub: 'Previous Payment', icon: '🕒' },
+                { label: 'Due Date', value: formatShortDate(billSummary.nextPaymentDeadline), sub: 'Next Deadline', icon: '🔔' },
+              ].map((stat, i) => (
+                <div key={i} className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:border-indigo-200 transition-colors">
+                  <div className="text-2xl mb-4">{stat.icon}</div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</p>
+                  <p className="text-lg font-black text-slate-800 mt-1">{stat.value}</p>
+                  <p className="text-[10px] text-slate-400 mt-1 font-medium">{stat.sub}</p>
+                </div>
+              ))}
+            </div>
 
-            {/* No Data Message */}
-            {!receiptData && consumerNo && (
-              <div className="text-center p-4 md:p-6 bg-red-50 border-2 border-red-300 rounded-lg">
-                <p className="text-red-600 font-semibold text-sm md:text-base">No receipt found. Try another consumer number.</p>
+            {/* Extraordinary Late Fee Banner */}
+            {billSummary.isFineApplied && (
+              <div className="relative overflow-hidden bg-rose-50 border border-rose-200 p-8 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-6">
+                <div className="absolute top-0 left-0 w-2 h-full bg-rose-500"></div>
+                <div>
+                  <h4 className="text-rose-900 font-black uppercase tracking-wider text-sm mb-2">Notice: Compliance Charges Applied</h4>
+                  <p className="text-rose-700/80 text-sm font-medium">A statutory late fee including GST/CGST has been appended due to payment delinquency.</p>
+                </div>
+                <div className="text-center md:text-right">
+                  <p className="text-xs font-bold text-rose-400 uppercase">Fine Breakdown</p>
+                  <p className="text-2xl font-black text-rose-600">₹{billSummary.fineDetails.totalFineWithTax.toFixed(2)}</p>
+                </div>
               </div>
             )}
           </div>
-        </div>
-      </div>
+        )}
+      </main>
 
-      {/* Footer */}
-      <div className="bg-slate-900 text-white text-center py-3 md:py-4 border-t-2 border-slate-700">
-        <p className="text-xs md:text-sm px-2">&copy; 2025 E-Receipt Inc. All rights reserved.</p>
-        <div className="text-xs mt-1 md:mt-2 px-2">
-          <a href="/privacy-policy" className="hover:text-amber-400">Privacy Policy</a> | <a href="/terms-of-service" className="hover:text-amber-400">Terms of Service</a>
+      {/* Corporate Footer */}
+      <footer className="bg-white border-t border-slate-200 pt-16 pb-8">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-12 opacity-50 grayscale">
+            <span className="text-xl font-black text-slate-400">GridVision™</span>
+            <div className="flex gap-8 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
+              <span>ISO 27001</span>
+              <span>PCI Compliant</span>
+              <span>256-bit AES</span>
+            </div>
+          </div>
+          <div className="text-center space-y-4">
+            <p className="text-slate-400 text-xs font-medium">© 2025 Smart Electricity Board. All system activities are logged for security purposes.</p>
+            <div className="flex justify-center gap-8 text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
+              <a href="#" className="hover:text-slate-900 transition-colors">Help Desk</a>
+              <a href="#" className="hover:text-slate-900 transition-colors">Digital Privacy</a>
+              <a href="#" className="hover:text-slate-900 transition-colors">Accessibility</a>
+            </div>
+          </div>
         </div>
-      </div>
+      </footer>
     </div>
   );
 }

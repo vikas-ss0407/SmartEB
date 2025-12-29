@@ -1,28 +1,37 @@
-import tensorflow as tf
 import numpy as np
 from PIL import Image
-import cv2
-
-models = [
-    tf.keras.models.load_model("models/model1.h5"),
-    tf.keras.models.load_model("models/model2.h5"),
-    tf.keras.models.load_model("models/model3.h5"),
-    tf.keras.models.load_model("models/model4.h5"),
-    tf.keras.models.load_model("models/model5.h5"),
-]
-
-def preprocess(image_bytes):
-    image = Image.open(image_bytes).resize((224, 224))
-    image = np.array(image) / 255.0
-    return np.expand_dims(image, axis=0)
+import io
 
 def validate_image(image_bytes):
-    image = preprocess(image_bytes)
-    results = []
-
-    for model in models:
-        prediction = model.predict(image)[0][0]
-        results.append(prediction)
-
-    avg_score = sum(results) / len(results)
-    return avg_score > 0.5
+    """
+    Simple image validation without using incompatible models.
+    Checks if the image can be opened and has reasonable dimensions.
+    """
+    try:
+        # Try to open the image
+        image = Image.open(image_bytes)
+        
+        # Check image size
+        width, height = image.size
+        
+        # Image must be at least 50x50 pixels
+        if width < 50 or height < 50:
+            print(f"Image too small: {width}x{height}")
+            return False
+        
+        # Image should not be extremely large (e.g., > 4000x4000)
+        if width > 4000 or height > 4000:
+            print(f"Image too large: {width}x{height}")
+            return False
+        
+        # Check if image has valid color mode
+        if image.mode not in ['RGB', 'RGBA', 'L', 'P']:
+            print(f"Invalid color mode: {image.mode}")
+            return False
+        
+        print(f"Image validation successful: {width}x{height}, mode: {image.mode}")
+        return True
+        
+    except Exception as e:
+        print(f"Image validation error: {str(e)}")
+        return False

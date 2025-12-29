@@ -1,144 +1,139 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { motion } from 'framer-motion';
+
+const fadeInUp = {
+  initial: { opacity: 0, y: 20 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] }
+};
 
 function Profile({ onLogout }) {
   const navigate = useNavigate();
-  const [userData, setUserData] = useState({
-    userName: '',
-    address: '',
-    email: '',
-    phoneNo: '',
-  });
-  const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     if (!userId) {
-      console.warn("No userId found");
       navigate('/login');
       return;
     }
 
-    setLoading(true);
-    axios.get(`http://localhost:5000/api/auth/${userId}`) // Correct API endpoint
-      .then(res => {
-        const { name, address, email, phoneNo } = res.data; // Match backend response
-        setUserData({
-          userName: name, // Map name to userName
-          address,
-          email,
-          phoneNo
-        });
-      })
-      .catch(err => {
-        console.error("Failed to fetch user data", err);
-        alert("Session expired or user not found.");
-        localStorage.removeItem('userId');
+    axios.get(`http://localhost:5000/api/auth/${userId}`)
+      .then(res => setUser(res.data))
+      .catch(() => {
+        localStorage.clear();
         navigate('/login');
-      })
-      .finally(() => setLoading(false));
+      });
   }, [navigate]);
 
-  const handleLogout = () => {
-    if (onLogout) {
-      onLogout();
-    } else {
-      localStorage.clear();
-      navigate('/login');
-    }
+  const logout = () => {
+    if (onLogout) onLogout();
+    localStorage.clear();
+    navigate('/login');
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-400 to-slate-600 flex flex-col">
-      <div className="bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg p-3 md:p-4">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
-          <div className="text-white font-bold text-base md:text-lg flex items-center gap-2">
-            <span className="text-xl md:text-2xl">👤</span> Profile
-          </div>
-          <div className="text-white flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-            
-            <button
-              className="bg-red-600 hover:bg-red-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-all duration-300 w-full sm:w-auto"
-              onClick={handleLogout}
-            >
-              Logout →
-            </button>
-          </div>
-        </div>
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[#02040a] text-white flex items-center justify-center">
+        <span className="text-xs tracking-[0.4em] uppercase text-slate-500">
+          Loading Profile…
+        </span>
       </div>
+    );
+  }
 
-      {loading ? (
-        <div className="flex-1 flex items-center justify-center p-6 text-white">
-          <p className="text-sm md:text-base">Loading your profile…</p>
-        </div>
-      ) : (
-        <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6">
-          <div className="bg-white rounded-xl md:rounded-2xl shadow-2xl border-2 border-teal-400 p-4 sm:p-6 md:p-8 w-full max-w-2xl">
-            <h2 className="text-2xl md:text-3xl font-bold text-center text-slate-800 mb-6 md:mb-8">📋 Your Profile</h2>
-
-            <div className="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-lg p-4 mb-6">
-              <div className="h-12 w-12 md:h-14 md:w-14 rounded-full bg-teal-600 text-white flex items-center justify-center text-lg md:text-xl font-bold">
-                {(userData.userName || 'U')?.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1">
-                <p className="text-slate-800 font-semibold text-sm md:text-base">{userData.userName || 'User'}</p>
-                <p className="text-slate-600 text-xs md:text-sm">{userData.email || 'user@example.com'}</p>
-              </div>
+  return (
+    <div className="min-h-screen bg-[#02040a] text-white overflow-x-hidden">
+      
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-black/60 backdrop-blur-xl border-b border-white/5 px-6 py-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
+          <div
+            onClick={() => navigate('/')}
+            className="flex items-center gap-4 cursor-pointer"
+          >
+            <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
+              <span className="text-black font-black">GV</span>
             </div>
-
-            <div className="space-y-4 md:space-y-6">
-              <div className="flex flex-col">
-                <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">👤 User Name:</label>
-                <input
-                  className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-100 border-2 border-transparent text-slate-700 font-semibold cursor-not-allowed text-sm md:text-base"
-                  type="text"
-                  value={userData.userName}
-                  readOnly
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">📧 E-mail ID:</label>
-                <input
-                  className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-100 border-2 border-transparent text-slate-700 font-semibold cursor-not-allowed text-sm md:text-base"
-                  type="email"
-                  value={userData.email}
-                  readOnly
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">🏠 Address:</label>
-                <input
-                  className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-100 border-2 border-transparent text-slate-700 font-semibold cursor-not-allowed text-sm md:text-base"
-                  type="text"
-                  value={userData.address}
-                  readOnly
-                />
-              </div>
-
-              <div className="flex flex-col">
-                <label className="text-slate-700 font-semibold mb-2 text-sm md:text-base">📞 Phone No:</label>
-                <input
-                  className="px-3 md:px-4 py-2 md:py-3 rounded-lg bg-gray-100 border-2 border-transparent text-slate-700 font-semibold cursor-not-allowed text-sm md:text-base"
-                  type="tel"
-                  value={userData.phoneNo}
-                  readOnly
-                />
-              </div>
-
-              <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border-2 border-teal-300 rounded-lg p-3 md:p-4 mt-4 md:mt-6">
-                <p className="text-slate-600 text-xs md:text-sm text-center">
-                  ℹ️ This is your read-only profile. To update your information, please contact our support team.
-                </p>
-              </div>
-            </div>
+            <h1 className="text-xl font-black uppercase italic tracking-tight">
+              System <span className="text-teal-500">Profile</span>
+            </h1>
           </div>
+
+          <button
+            onClick={logout}
+            className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-400 hover:text-white transition"
+          >
+            Logout →
+          </button>
         </div>
-      )}
+      </header>
+
+      {/* Content */}
+      <main className="max-w-7xl mx-auto px-6 py-24">
+        <motion.div {...fadeInUp} className="mb-20">
+          <span className="text-teal-500 text-[10px] font-black tracking-[0.5em] uppercase">
+            User Identity Node
+          </span>
+          <h2 className="text-5xl md:text-7xl font-black uppercase italic tracking-tighter mt-6">
+            Account <span className="stroke-text">Details</span>
+          </h2>
+        </motion.div>
+
+        {/* Profile Card */}
+        <motion.div
+          {...fadeInUp}
+          transition={{ delay: 0.1 }}
+          className="grid md:grid-cols-2 gap-10 bg-slate-900/50 border border-white/5 rounded-[2.5rem] p-12"
+        >
+          <ProfileRow label="User Name" value={user.name} />
+          <ProfileRow label="Email Address" value={user.email} />
+          <ProfileRow label="Contact Number" value={user.phoneNo} />
+          <ProfileRow label="Registered Address" value={user.address} />
+        </motion.div>
+
+        {/* Info Note */}
+        <motion.div
+          {...fadeInUp}
+          transition={{ delay: 0.2 }}
+          className="mt-16 bg-white text-black rounded-[2rem] p-10"
+        >
+          <h3 className="text-2xl font-black uppercase italic mb-4">
+            Access Control
+          </h3>
+          <p className="font-bold opacity-70 max-w-2xl">
+            Profile attributes are locked to preserve ledger integrity.  
+            Any modification requires administrator authorization.
+          </p>
+        </motion.div>
+      </main>
+
+      {/* Footer */}
+      <footer className="py-16 border-t border-white/5 text-center text-[10px] font-black uppercase tracking-[0.5em] text-slate-500">
+        GridVision Infrastructure © 2025
+      </footer>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        .stroke-text {
+          -webkit-text-stroke: 1px rgba(255,255,255,0.35);
+          color: transparent;
+        }
+      `}} />
     </div>
   );
 }
+
+const ProfileRow = ({ label, value }) => (
+  <div className="border-b border-white/10 pb-6">
+    <p className="text-[10px] uppercase tracking-[0.4em] text-slate-500 mb-2">
+      {label}
+    </p>
+    <p className="text-xl font-black tracking-tight">
+      {value || 'Not Available'}
+    </p>
+  </div>
+);
 
 export default Profile;

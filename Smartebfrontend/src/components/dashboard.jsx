@@ -1,90 +1,167 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { 
+  LogOut, 
+  User, 
+  LayoutDashboard, 
+  Info, 
+  Zap, 
+  ArrowRight
+} from 'lucide-react';
+
+// Original Assets
 import manImage from '../assets/man.png';
 import quickPayImage from '../assets/Cash-Drawing.png';
 import eReceiptImage from '../assets/MONEY.png';
+import NotificationWidget from './Notifications';
 
-function Dashboard({ user, onLogout }) {
+// Animation Config
+const cardIn = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { type: 'spring', damping: 25, stiffness: 120 }
+  }
+};
+
+function Dashboard({ onLogout }) {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    const name = localStorage.getItem('userName') || 'Guest User';
+    const name = localStorage.getItem('userName') || 'User';
     setUserName(name);
   }, []);
 
-  const handleLogout = () => {
-    onLogout?.();
-    navigate('/login');
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-300 to-slate-500 flex flex-col">
-      {/* Top Navigation */}
-      <div className="bg-gradient-to-r from-slate-700 to-slate-900 shadow-lg p-3 md:p-4">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-4">
-          <div className="text-white font-bold text-base md:text-lg flex items-center gap-2">
-            <span className="text-xl md:text-2xl">🏠</span> Home
+    <div className="min-h-screen bg-[#0a0c10] text-slate-200 font-sans selection:bg-cyan-500/30 overflow-x-hidden">
+      {/* Premium Background Effects */}
+      <div className="fixed inset-0 bg-[radial-gradient(circle_at_20%_20%,#16202c_0%,#0a0c10_100%)] pointer-events-none" />
+      
+      {/* Mac OS Style Header */}
+      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#0a0c10]/60 border-b border-white/5 px-6 py-4">
+        <div className="max-w-6xl mx-auto flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
+              <Zap className="text-white w-6 h-6" fill="white" />
+            </div>
+            <h1 className="text-xl font-bold tracking-tight text-white italic">GridVision</h1>
           </div>
-          <div className="text-white flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
-            <span className="font-semibold text-sm md:text-base text-center">Hi {userName}, Welcome!</span>
-            <button
-              onClick={handleLogout}
-              className="bg-red-600 hover:bg-red-700 px-3 py-1.5 md:px-4 md:py-2 rounded-lg font-bold text-sm md:text-base transition-all duration-300 transform hover:scale-105 w-full sm:w-auto"
+
+          <div className="flex items-center gap-4">
+            <div className="hidden sm:block text-right">
+              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Account Active</p>
+              <p className="text-sm font-medium text-white">{userName}</p>
+            </div>
+            <button 
+              onClick={() => { onLogout?.(); navigate('/login'); }}
+              className="p-2 hover:bg-red-500/10 text-slate-400 hover:text-red-500 rounded-full transition-colors"
+              title="Logout"
             >
-              Logout →
+              <LogOut size={20} />
             </button>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Content Section */}
-      <div className="flex-1 flex items-center justify-center p-3 sm:p-4 md:p-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 w-full max-w-5xl">
-          {/* Scan Readings Card */}
-          <div
+      <main className="relative z-10 max-w-6xl mx-auto p-6 md:p-10 pb-32">
+        <NotificationWidget />
+
+        {/* Welcome Text */}
+        <motion.div 
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-12"
+        >
+          <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-2 tracking-tight">
+            Hello, {userName.split(' ')[0]}!
+          </h2>
+          <p className="text-slate-400 text-lg">
+            What would you like to do today?
+          </p>
+        </motion.div>
+
+        {/* Main Grid Modules */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {/* Card 1: Scan Readings */}
+          <ActionCard 
+            title="Scan Meter"
+            desc="Snap a photo of your meter to update your current usage units."
+            image={manImage}
             onClick={() => navigate('/scanread')}
-            className="bg-white rounded-xl md:rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer p-4 md:p-6 text-center border-2 border-teal-400"
-          >
-            <img src={manImage} alt="Scan Readings" className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-3 md:mb-4 object-contain" />
-            <h3 className="text-lg md:text-xl font-bold text-slate-700">SCAN READINGS</h3>
-            <p className="text-slate-500 mt-2 text-xs md:text-sm">📷 Capture meter readings</p>
-          </div>
+          />
 
-          {/* Quick Pay Card */}
-          <div
+          {/* Card 2: Quick Pay */}
+          <ActionCard 
+            title="Quick Pay"
+            desc="Pay your monthly EB bill instantly via secure payment gateway."
+            image={quickPayImage}
             onClick={() => navigate('/quickpage')}
-            className="bg-white rounded-xl md:rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer p-4 md:p-6 text-center border-2 border-green-400"
-          >
-            <img src={quickPayImage} alt="Quick Pay" className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-3 md:mb-4 object-contain" />
-            <h3 className="text-lg md:text-xl font-bold text-slate-700">QUICK PAY</h3>
-            <p className="text-slate-500 mt-2 text-xs md:text-sm">⚡ Fast payment solution</p>
-          </div>
+          />
 
-          {/* E-Receipt Card */}
-          <div
+          {/* Card 3: E-Receipt */}
+          <ActionCard 
+            title="My Receipts"
+            desc="Download and view your previous bill payment history."
+            image={eReceiptImage}
             onClick={() => navigate('/ereciept')}
-            className="bg-white rounded-xl md:rounded-2xl shadow-xl hover:shadow-2xl transform hover:scale-105 transition-all duration-300 cursor-pointer p-4 md:p-6 text-center border-2 border-amber-400"
-          >
-            <img src={eReceiptImage} alt="E-Receipt" className="w-16 h-16 md:w-24 md:h-24 mx-auto mb-3 md:mb-4 object-contain" />
-            <h3 className="text-lg md:text-xl font-bold text-slate-700">E-RECEIPT</h3>
-            <p className="text-slate-500 mt-2 text-xs md:text-sm">🧾 View and download receipts</p>
-          </div>
+          />
         </div>
-      </div>
+      </main>
 
-      {/* Bottom Navigation */}
-      <div className="bg-gradient-to-r from-slate-700 to-slate-900 shadow-xl">
-        <nav className="flex flex-wrap justify-center gap-2 sm:gap-4 p-3 md:p-4 max-w-5xl mx-auto">
-          <Link to="/dashboard" className="text-white font-semibold text-xs sm:text-sm md:text-base hover:text-teal-400 transition-colors px-2 py-1">Home</Link>
-          <Link to="/about" className="text-white font-semibold text-xs sm:text-sm md:text-base hover:text-teal-400 transition-colors px-2 py-1">About</Link>
-          <Link to="/scanread" className="text-white font-semibold text-xs sm:text-sm md:text-base hover:text-teal-400 transition-colors px-2 py-1">Scan Reading</Link>
-          <Link to="/quickpage" className="text-white font-semibold text-xs sm:text-sm md:text-base hover:text-teal-400 transition-colors px-2 py-1">Quick Pay</Link>
-          <Link to="/ereciept" className="text-white font-semibold text-xs sm:text-sm md:text-base hover:text-teal-400 transition-colors px-2 py-1">E-Receipt</Link>
-          <Link to="/profile" className="text-white font-semibold text-xs sm:text-sm md:text-base hover:text-teal-400 transition-colors px-2 py-1">Profile</Link>
+      {/* Mac Style Navigation Dock */}
+      <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
+        <nav className="flex items-center gap-2 bg-[#161b22]/90 backdrop-blur-2xl border border-white/10 p-2 rounded-3xl shadow-2xl">
+          <DockIcon to="/dashboard" icon={<LayoutDashboard size={22} />} active />
+          <DockIcon to="/about" icon={<Info size={22} />} />
+          <div className="w-[1px] h-6 bg-white/10 mx-1" />
+          <DockIcon to="/profile" icon={<User size={22} />} />
         </nav>
       </div>
     </div>
+  );
+}
+
+// Sub-components
+function ActionCard({ title, desc, image, onClick }) {
+  return (
+    <motion.div
+      variants={cardIn}
+      initial="hidden"
+      animate="visible"
+      whileHover={{ y: -8, scale: 1.02 }}
+      onClick={onClick}
+      className="group relative bg-white/[0.03] backdrop-blur-md border border-white/5 rounded-[2.5rem] p-6 md:p-8 cursor-pointer transition-all duration-300 overflow-hidden"
+    >
+      <div className="mb-6 h-32 flex items-center justify-center relative">
+        <div className="absolute inset-0 bg-cyan-500/10 blur-3xl rounded-full scale-50 group-hover:scale-100 transition-transform duration-500" />
+        <img src={image} alt={title} className="h-full object-contain relative z-10" />
+      </div>
+      
+      <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
+      <p className="text-slate-400 text-sm leading-relaxed mb-6">{desc}</p>
+      
+      <div className="flex items-center gap-2 text-xs font-bold text-cyan-400">
+        GET STARTED <ArrowRight size={14} className="group-hover:translate-x-1 transition-transform" />
+      </div>
+    </motion.div>
+  );
+}
+
+function DockIcon({ to, icon, active }) {
+  return (
+    <Link 
+      to={to} 
+      className={`p-3.5 rounded-2xl transition-all ${
+        active 
+        ? 'bg-cyan-500 text-black shadow-lg shadow-cyan-500/20' 
+        : 'text-slate-400 hover:bg-white/10 hover:text-white'
+      }`}
+    >
+      {icon}
+    </Link>
   );
 }
 
