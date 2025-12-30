@@ -28,6 +28,7 @@ function ScanReadings({ onLogout }) {
   const [amount, setAmount] = useState('');
   const [tariff, setTariff] = useState(0);
   const [userName, setUserName] = useState('');
+  const [now, setNow] = useState(new Date());
   const [uploadedImage, setUploadedImage] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const videoRef = useRef(null);
@@ -36,8 +37,10 @@ function ScanReadings({ onLogout }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedName = localStorage.getItem('userName') || 'Guest User';
+    const storedName = sessionStorage.getItem('userName') || localStorage.getItem('userName') || 'Guest User';
     setUserName(storedName);
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
 
   const resetForm = () => {
@@ -229,13 +232,16 @@ function ScanReadings({ onLogout }) {
             <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-200">
               <Zap className="text-white w-6 h-6" fill="currentColor" />
             </div>
-            <span className="text-2xl font-black tracking-tight text-slate-800">eMeter<span className="text-indigo-600"> Seva</span></span>
+            <span className="text-2xl font-black tracking-tight text-slate-800">eMeterSeva<span className="text-indigo-600"> Scan Reading</span></span>
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 bg-slate-100 px-4 py-2 rounded-full border border-slate-200">
+            <div className="hidden md:flex items-center gap-3 bg-slate-100 px-4 py-2 rounded-full border border-slate-200">
               <User size={16} className="text-indigo-600" />
-              <span className="text-sm font-bold text-slate-700">{userName}</span>
+              <div className="flex flex-col leading-tight">
+                <span className="text-sm font-bold text-slate-700">{userName}</span>
+                <span className="text-[11px] font-semibold text-slate-500">{now.toLocaleString()}</span>
+              </div>
             </div>
             <button
               onClick={handleLogout}
@@ -315,7 +321,7 @@ function ScanReadings({ onLogout }) {
 
           {/* RIGHT COLUMN: AI SCANNING INTERFACE */}
           <div className="lg:col-span-7">
-            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 h-full flex flex-col">
+            <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-5 sm:p-6 h-full flex flex-col">
               <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <Camera className="text-indigo-600" size={20} />
                 eMeter Seva AI Capture
@@ -324,7 +330,7 @@ function ScanReadings({ onLogout }) {
               {!isCameraOpen ? (
                 <div className="flex-1 flex flex-col">
                   <div 
-                    className={`flex-1 border-2 border-dashed rounded-[2.5rem] p-10 flex flex-col items-center justify-center transition-all duration-300
+                    className={`flex-1 border-2 border-dashed rounded-[2rem] sm:rounded-[2.5rem] p-6 sm:p-10 flex flex-col items-center justify-center transition-all duration-300
                       ${uploadedImage ? 'border-green-400 bg-green-50/20' : 'border-slate-200 bg-slate-50 hover:border-indigo-400 hover:bg-indigo-50/30'}`}
                   >
                     {uploadedImage ? (
@@ -343,24 +349,24 @@ function ScanReadings({ onLogout }) {
                       </div>
                     ) : (
                       <div className="text-center max-w-sm">
-                        <div className="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-8 text-indigo-600">
-                          <Camera size={40} />
+                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-6 sm:mb-8 text-indigo-600">
+                          <Camera size={32} className="sm:w-10 sm:h-10" />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-800 mb-2">Scan Meter</h3>
-                        <p className="text-slate-500 font-medium text-sm mb-10 leading-relaxed">
+                        <h3 className="text-xl sm:text-2xl font-black text-slate-800 mb-2">Scan Meter</h3>
+                        <p className="text-slate-500 font-medium text-sm mb-8 sm:mb-10 leading-relaxed">
                           Position your electric meter display clearly. Our AI will automatically extract the readings.
                         </p>
                         
-                        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                        <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
                           <button 
                             onClick={startCamera}
-                            className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 transform hover:-translate-y-1 transition-all"
+                            className="bg-indigo-600 text-white px-8 py-4 rounded-2xl font-black shadow-xl shadow-indigo-100 hover:bg-indigo-700 transform hover:-translate-y-1 transition-all text-sm"
                           >
                             Open Camera
                           </button>
                           <button 
                             onClick={() => fileInputRef.current?.click()}
-                            className="bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2"
+                            className="bg-white border border-slate-200 text-slate-700 px-8 py-4 rounded-2xl font-bold hover:bg-slate-50 transition-all flex items-center gap-2 text-sm"
                           >
                             <Upload size={18} /> Upload File
                           </button>

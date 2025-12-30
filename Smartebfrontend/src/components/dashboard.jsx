@@ -10,9 +10,8 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-// Original Assets
 import manImage from '../assets/man.png';
-import quickPayImage from '../assets/Cash-Drawing.png';
+import quickPayImage from '../assets/Cash.png';
 import eReceiptImage from '../assets/MONEY.png';
 import NotificationWidget from './Notifications';
 
@@ -47,7 +46,7 @@ function Dashboard({ onLogout }) {
             <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
               <Zap className="text-white w-6 h-6" fill="white" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-white italic">eMeter Seva</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white italic">eMeterSeva</h1>
           </div>
 
           <div className="flex items-center gap-4">
@@ -103,7 +102,7 @@ function Dashboard({ onLogout }) {
 
           {/* Card 3: E-Receipt */}
           <ActionCard 
-            title="My Receipts"
+            title="E-Receipt"
             desc="Download and view your previous bill payment history."
             image={eReceiptImage}
             onClick={() => navigate('/ereciept')}
@@ -137,7 +136,11 @@ function ActionCard({ title, desc, image, onClick }) {
     >
       <div className="mb-6 h-32 flex items-center justify-center relative">
         <div className="absolute inset-0 bg-cyan-500/10 blur-3xl rounded-full scale-50 group-hover:scale-100 transition-transform duration-500" />
-        <img src={image} alt={title} className="h-full object-contain relative z-10" />
+        <img
+          src={image}
+          alt={title}
+          className="relative z-10 h-[8.5rem] w-[8.5rem] rounded-full object-cover shadow-lg shadow-cyan-500/20"
+        />
       </div>
       
       <h3 className="text-xl font-bold text-white mb-2">{title}</h3>

@@ -23,6 +23,7 @@ function QuickPay({ onLogout }) {
   
   // App State
   const [userName, setUserName] = useState('');
+  const [now, setNow] = useState(new Date());
   const [consumerNo, setConsumerNo] = useState('');
   const [consumerName, setConsumerName] = useState('');
   const [amount, setAmount] = useState(0);
@@ -36,8 +37,10 @@ function QuickPay({ onLogout }) {
   const [dummyId, setDummyId] = useState('');
 
   useEffect(() => {
-    const storedName = localStorage.getItem('userName');
-    if (storedName) setUserName(storedName);
+    const storedName = sessionStorage.getItem('userName') || localStorage.getItem('userName') || 'Guest User';
+    setUserName(storedName);
+    const t = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(t);
   }, []);
 
   const handleLogout = () => {
@@ -111,32 +114,39 @@ function QuickPay({ onLogout }) {
             <div className="bg-indigo-600 p-1.5 rounded-lg shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform">
               <Zap className="text-white w-5 h-5" fill="currentColor" />
             </div>
-            <span className="text-xl font-black tracking-tight text-slate-800">eMeter<span className="text-indigo-600"> Seva</span></span>
+            <span className="text-xl font-black tracking-tight text-slate-800">eMeterSeva<span className="text-indigo-600"> QuickPay</span></span>
           </div>
           
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs font-bold text-slate-600">{userName}</span>
+            <div className="hidden md:flex items-center gap-3 bg-slate-100 px-4 py-2 rounded-full border border-slate-200">
+              <User size={16} className="text-indigo-600" />
+              <div className="flex flex-col leading-tight">
+                <span className="text-sm font-bold text-slate-700">{userName}</span>
+                <span className="text-[11px] font-semibold text-slate-500">{now.toLocaleString()}</span>
+              </div>
             </div>
-            <button onClick={handleLogout} className="p-2 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-full transition-colors">
-              <LogOut size={20} />
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-slate-900 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-md"
+            >
+              <LogOut size={18} />
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
       </nav>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:24px_24px]">
-        <div className="bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] w-full max-w-[440px] border border-slate-100 overflow-hidden">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:24px_24px]">
+        <div className="bg-white rounded-3xl sm:rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] w-full max-w-[380px] sm:max-w-[440px] border border-slate-100 overflow-hidden">
           
-          <div className="bg-indigo-600 p-8 text-white relative overflow-hidden">
+          <div className="bg-indigo-600 p-6 sm:p-8 text-white relative overflow-hidden">
              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16 blur-2xl"></div>
              <p className="text-indigo-200 text-xs font-black uppercase tracking-[0.2em] mb-1">Secure Checkout</p>
              <h2 className="text-3xl font-black tracking-tight">QuickPay</h2>
           </div>
 
-          <div className="p-8 space-y-6">
+          <div className="p-6 sm:p-8 space-y-6">
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Consumer Credentials</label>
               <div className="flex gap-2">
@@ -214,12 +224,12 @@ function QuickPay({ onLogout }) {
 
       {/* --- PREMIUM PAYMENT MODAL --- */}
       {paymentStep !== 'idle' && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-[2.5rem] w-full max-w-[400px] overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xl z-50 flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl sm:rounded-[2.5rem] w-full max-w-[360px] sm:max-w-[420px] overflow-hidden shadow-[0_30px_100px_rgba(0,0,0,0.3)] animate-in fade-in zoom-in duration-300">
             
             {/* Modal Step: Choose Method */}
             {paymentStep === 'choosingMethod' && (
-              <div className="p-8">
+              <div className="p-6 sm:p-8">
                 <h3 className="text-2xl font-black text-slate-800 mb-2">Payment Method</h3>
                 <p className="text-slate-400 text-sm font-medium mb-8">Select your preferred way to pay</p>
                 
@@ -253,7 +263,7 @@ function QuickPay({ onLogout }) {
 
             {/* Modal Step: Active QR/Bank */}
             {paymentStep === 'active' && (
-              <div className="p-8 text-center">
+              <div className="p-6 sm:p-8 text-center">
                 {method === 'qr' ? (
                   <div className="animate-in fade-in slide-in-from-bottom-4">
                     <h3 className="font-black text-xl mb-6 text-slate-800">Scan & Pay</h3>
@@ -298,7 +308,7 @@ function QuickPay({ onLogout }) {
 
             {/* Modal Step: Processing */}
             {paymentStep === 'processing' && (
-              <div className="p-16 text-center">
+              <div className="p-12 sm:p-16 text-center">
                 <div className="relative w-24 h-24 mx-auto mb-8">
                    <div className="absolute inset-0 border-4 border-indigo-100 rounded-full"></div>
                    <div className="absolute inset-0 border-4 border-indigo-600 rounded-full border-t-transparent animate-spin"></div>
@@ -313,7 +323,7 @@ function QuickPay({ onLogout }) {
 
             {/* Modal Step: Success */}
             {paymentStep === 'success' && (
-              <div className="p-8 text-center bg-white animate-in zoom-in duration-500">
+              <div className="p-6 sm:p-8 text-center bg-white animate-in zoom-in duration-500">
                 <div className="w-24 h-24 bg-green-500 text-white rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl shadow-green-200 ring-8 ring-green-50">
                    <CheckCircle2 size={48} />
                 </div>

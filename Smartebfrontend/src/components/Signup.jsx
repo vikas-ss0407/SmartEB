@@ -65,8 +65,8 @@ const Signup = () => {
         <div className="bg-gradient-to-r from-teal-600 to-indigo-600 px-8 py-6 border-b border-white/10">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-2">
-                eMeter<span className="text-teal-200"> Seva</span>
+              <h1 className="text-3xl font-black italic tracking-tighter text-white mb-2">
+                eMeter<span className="text-teal-200">Seva</span>
               </h1>
               <p className="text-teal-100/80 text-sm font-medium">Create New Account</p>
             </div>
@@ -214,7 +214,7 @@ const Signup = () => {
 
         {/* Footer */}
         <div className="bg-slate-900/50 px-8 py-4 border-t border-white/5 text-center">
-          <p className="text-slate-500 text-xs">© 2025 eMeter Seva Infrastructure. Secure & Encrypted.</p>
+          <p className="text-slate-500 text-xs">© 2025 eMeterSeva Infrastructure. Secure & Encrypted.</p>
         </div>
       </motion.div>
     </div>

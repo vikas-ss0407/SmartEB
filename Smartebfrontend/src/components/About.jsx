@@ -28,13 +28,13 @@ function About() {
             <div className="w-10 h-10 bg-teal-500 flex items-center justify-center rounded-lg shadow-[0_0_20px_rgba(20,184,166,0.3)]">
               <span className="text-black font-black">ES</span>
             </div>
-            <h1 className="text-xl font-black uppercase tracking-tighter italic">About <span className="text-teal-500">System</span></h1>
+            <h1 className="text-xl font-black text-[28px] tracking-tighter italic">About <span className="text-teal-500">eMeterSeva</span></h1>
           </div>
           <button 
             onClick={() => navigate('/')}
-            className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 hover:text-white transition-colors"
+            className="group flex items-center gap-2 text-[18px] font-black uppercase tracking-[0.01em] text-slate-400 hover:text-white transition-colors"
           >
-            Terminal Logout 
+            Back
             <span className="group-hover:translate-x-1 transition-transform">→</span>
           </button>
         </div>

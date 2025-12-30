@@ -43,41 +43,41 @@ function Landing() {
         <div className="bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
             <div className="bg-teal-500 p-2 rounded-xl group-hover:rotate-12 transition-transform shadow-[0_0_20px_rgba(20,184,166,0.5)]">⚡</div>
-            <span className="text-2xl font-black uppercase italic tracking-tighter">eMeter Seva</span>
+            <span className="text-2xl font-black italic tracking-tighter">eMeterSeva</span>
           </div>
-          <div className="hidden md:flex items-center gap-10 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
-            <button onClick={() => navigate('/about')} className="hover:text-teal-400 transition-colors">Platform</button>
-            <button onClick={() => navigate('/login')} className="hover:text-teal-400 transition-colors">Client Portal</button>
+          <div className="hidden md:flex items-center gap-10 text-[18px] font-black uppercase tracking-[0.2em] text-slate-400">
+            <button onClick={() => navigate('/about')} className="hover:text-teal-400 transition-colors">About</button>
+            <button onClick={() => navigate('/login')} className="hover:text-teal-400 transition-colors">Login</button>
             <button onClick={() => navigate('/signup')} className="bg-teal-500 text-black px-6 py-3 rounded-xl hover:bg-white transition-all shadow-lg">Join Network</button>
           </div>
         </div>
       </nav>
 
       {/* 4. HERO SECTION REFINED */}
-      <section className="relative pt-48 pb-32 px-6 max-w-7xl mx-auto">
+      <section className="relative pt-32 sm:pt-40 md:pt-48 pb-24 sm:pb-32 px-6 max-w-7xl mx-auto">
         <div className="grid lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-7">
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1 }}>
               <span className="inline-block px-3 py-1 mb-6 text-[10px] font-black tracking-[0.4em] text-teal-400 uppercase bg-teal-400/10 border border-teal-400/20 rounded-md">
                 Industry Standard AI
               </span>
-              <h1 className="text-6xl md:text-8xl lg:text-[9rem] font-black leading-[0.85] tracking-tighter uppercase italic mb-8">
+              <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[9rem] font-black leading-[0.9] md:leading-[0.85] tracking-tighter uppercase italic mb-6 sm:mb-8">
                 The Power <br />
                 <span className="stroke-text">of Vision.</span>
               </h1>
               <p className="text-xl text-slate-400 max-w-xl leading-relaxed mb-10 border-l-4 border-teal-500 pl-6">
                 eMeter Seva utilizes neural-mesh OCR to convert physical meter dials into verifiable digital data. Eliminate manual errors and automate your utility workflow instantly.
               </p>
-              <div className="flex gap-4">
-                <button onClick={() => navigate('/scanread')} className="px-10 py-5 bg-white text-black font-black rounded-2xl hover:bg-teal-500 transition-all uppercase tracking-widest text-sm">Launch Scanner</button>
-                <button onClick={() => navigate('/quickpage')} className="px-10 py-5 bg-slate-900 border border-white/10 font-black rounded-2xl hover:bg-slate-800 transition-all uppercase tracking-widest text-sm">Quick Pay</button>
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <button onClick={() => navigate('/scanread')} className="px-8 sm:px-10 py-4 sm:py-5 bg-white text-black font-black rounded-2xl hover:bg-teal-500 transition-all uppercase tracking-widest text-sm">Launch Scanner</button>
+                <button onClick={() => navigate('/quickpage')} className="px-8 sm:px-10 py-4 sm:py-5 bg-slate-900 border border-white/10 font-black rounded-2xl hover:bg-slate-800 transition-all uppercase tracking-widest text-sm">Quick Pay</button>
               </div>
             </motion.div>
           </div>
           
           <div className="lg:col-span-5 relative">
             <div className="absolute inset-0 bg-teal-500/20 blur-[100px] rounded-full animate-pulse" />
-            <div className="relative grid grid-cols-2 gap-4">
+            <div className="relative grid grid-cols-2 gap-3 sm:gap-4">
               {[
                 { img: manImage, label: "Scan", color: "border-teal-500/30" },
                 { img: quickPayImage, label: "Verify", color: "border-blue-500/30" },
@@ -103,7 +103,7 @@ function Landing() {
       <section className="py-32 bg-[#050810] relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-6">
           <div className="text-center mb-24">
-            <h2 className="text-4xl md:text-6xl font-black uppercase italic tracking-tighter">Autonomous Billing Workflow</h2>
+            <h2 className="text-4xl md:text-6xl font-black  italic tracking-tighter">eMeterSeva Billing Workflow</h2>
           </div>
 
           <div className="relative grid md:grid-cols-3 gap-8">

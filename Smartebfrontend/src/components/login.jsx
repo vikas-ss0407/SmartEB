@@ -79,8 +79,8 @@ function Login({ onLoginSuccess }) {
             <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-4">
               <span className="text-white font-black text-2xl">ES</span>
             </div>
-            <h1 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-2">
-              eMeter<span className="text-teal-200"> Seva</span>
+            <h1 className="text-3xl font-black  italic tracking-tighter text-white mb-2">
+              eMeter<span className="text-teal-200">Seva</span>
             </h1>
             <p className="text-teal-100/80 text-sm font-medium">Sign in to your account</p>
           </div>
@@ -157,7 +157,7 @@ function Login({ onLoginSuccess }) {
 
           {/* Footer */}
           <div className="bg-slate-900/50 px-8 py-4 border-t border-white/5 text-center">
-            <p className="text-slate-500 text-xs">© 2025 eMeter Seva Infrastructure</p>
+            <p className="text-slate-500 text-xs">© 2025 eMeterSeva Infrastructure</p>
           </div>
         </div>
 

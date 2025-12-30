@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import jsPDF  from 'jspdf';
+import { User, Zap, LogOut } from 'lucide-react';
 import { getBillSummary } from '../api/consumerApi';
 import NotificationWidget from './Notifications';
 
@@ -450,31 +451,29 @@ function EReceipt({ onLogout }) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans selection:bg-indigo-100 selection:text-indigo-900">
       {/* Premium Navigation */}
-      <nav className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 px-6 py-3">
+      <nav className="sticky top-0 z-50 bg-white border-b border-slate-200 px-6 py-4">
         <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <div className="bg-gradient-to-br from-indigo-600 to-violet-700 p-2.5 rounded-xl shadow-lg shadow-indigo-200">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
+          <div className="flex items-center gap-2">
+            <div className="bg-indigo-600 p-1.5 rounded-lg shadow-lg shadow-indigo-200">
+              <Zap className="text-white w-5 h-5" fill="currentColor" />
             </div>
-            <div>
-              <span className="text-lg font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">eMeter Seva</span>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Enterprise Portal</p>
-            </div>
+            <span className="text-xl font-black tracking-tight text-slate-800">eMeterSeva<span className="text-indigo-600"> E-Receipt</span></span>
           </div>
           
-          <div className="flex items-center gap-6">
-            <div className="hidden lg:block text-right">
-              <p className="text-sm font-bold text-slate-800">{userName}</p>
-              <p className="text-xs text-slate-400">{formatDateTime(currentDateTime)}</p>
+          <div className="flex items-center gap-4 sm:gap-6">
+            <div className="hidden md:flex items-center gap-3 bg-slate-100 px-4 py-2 rounded-full border border-slate-200">
+              <User size={16} className="text-indigo-600" />
+              <div className="flex flex-col leading-tight">
+                <span className="text-sm font-bold text-slate-700">{userName}</span>
+                <span className="text-[11px] font-semibold text-slate-500">{currentDateTime.toLocaleString()}</span>
+              </div>
             </div>
             <button
               onClick={handleLogout}
-              className="group flex items-center gap-2 bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-600 px-4 py-2 rounded-xl text-sm font-bold transition-all border border-slate-200 hover:border-rose-200"
+              className="flex items-center gap-2 bg-slate-900 hover:bg-red-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-md"
             >
-              Sign Out
-              <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+              <LogOut size={18} />
+              <span className="hidden sm:inline">Logout</span>
             </button>
           </div>
         </div>
@@ -623,14 +622,6 @@ function EReceipt({ onLogout }) {
       {/* Corporate Footer */}
       <footer className="bg-white border-t border-slate-200 pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-12 opacity-50 grayscale">
-            <span className="text-xl font-black text-slate-400">eMeter Seva™</span>
-            <div className="flex gap-8 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
-              <span>ISO 27001</span>
-              <span>PCI Compliant</span>
-              <span>256-bit AES</span>
-            </div>
-          </div>
           <div className="text-center space-y-4">
             <p className="text-slate-400 text-xs font-medium">© 2025 Smart Electricity Board. All system activities are logged for security purposes.</p>
             <div className="flex justify-center gap-8 text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
