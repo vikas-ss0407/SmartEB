@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { getBillSummary } from '../../api/consumerApi';
 import { 
   ArrowLeft, 
   Gauge, 
-  Calendar, 
   Hash, 
   CheckCircle2, 
   AlertCircle 
@@ -15,8 +15,12 @@ function AddReading() {
   const [reading, setReading] = useState({
     consumerNumber: '',
     meterReading: '',
-    readingDate: new Date().toISOString().split('T')[0],
   });
+
+  const [prevReading, setPrevReading] = useState(null);
+  const [tariffRate, setTariffRate] = useState(null);
+  const [unitsComputed, setUnitsComputed] = useState(null);
+  const [amountComputed, setAmountComputed] = useState(null);
 
   const [status, setStatus] = useState({ type: '', msg: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,12 +29,71 @@ function AddReading() {
     setReading({ ...reading, [e.target.name]: e.target.value });
   };
 
+  // Fetch existing consumer reading and tariff when consumer id entered
+  useEffect(() => {
+    const loadConsumer = async () => {
+      const id = reading.consumerNumber.trim();
+      if (!id) return;
+      try {
+        const data = await getBillSummary(id);
+        setPrevReading(Number(data.currentReading || 0));
+        setTariffRate(Number(data.tariffRate || 0));
+        setStatus({ type: '', msg: '' });
+      } catch (err) {
+        setPrevReading(null);
+        setTariffRate(null);
+        setStatus({ type: 'error', msg: 'Consumer not found. Please verify the ID.' });
+      }
+    };
+    loadConsumer();
+  }, [reading.consumerNumber]);
+
+  // Compute units and amount as user types current reading
+  useEffect(() => {
+    if (prevReading === null || tariffRate === null) {
+      setUnitsComputed(null);
+      setAmountComputed(null);
+      return;
+    }
+    const currentVal = Number(reading.meterReading);
+    if (!Number.isFinite(currentVal)) {
+      setUnitsComputed(null);
+      setAmountComputed(null);
+      return;
+    }
+    const units = currentVal - prevReading;
+    setUnitsComputed(units);
+    if (units > 0) {
+      setAmountComputed(units * tariffRate);
+    } else {
+      setAmountComputed(null);
+    }
+  }, [reading.meterReading, prevReading, tariffRate]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setStatus({ type: '', msg: '' });
 
-    if (isNaN(reading.meterReading) || reading.meterReading <= 0) {
+    if (prevReading === null || tariffRate === null) {
+      setStatus({ type: 'error', msg: 'Enter a valid consumer ID to load previous reading and tariff.' });
+      return;
+    }
+
+    const currentVal = Number(reading.meterReading);
+    if (!Number.isFinite(currentVal) || currentVal <= 0) {
       setStatus({ type: 'error', msg: 'Please enter a valid meter reading above 0.' });
+      return;
+    }
+
+    if (currentVal <= prevReading) {
+      setStatus({ type: 'error', msg: `Current reading must be greater than previous reading (${prevReading}).` });
+      return;
+    }
+
+    const unitsToRecord = currentVal - prevReading;
+
+    if (unitsToRecord <= 0) {
+      setStatus({ type: 'error', msg: 'Units consumed must be greater than 0.' });
       return;
     }
 
@@ -39,12 +102,15 @@ function AddReading() {
       await axios.put(
         `http://localhost:5000/api/consumers/add-reading/${reading.consumerNumber}`, 
         {
-          unitsConsumed: Number(reading.meterReading),
-          readingDate: reading.readingDate,
+          unitsConsumed: unitsToRecord,
+          currentReading: currentVal,
+          readingDate: new Date().toISOString(),
         }
       );
       setStatus({ type: 'success', msg: `Reading for ${reading.consumerNumber} recorded successfully!` });
       setReading(prev => ({ ...prev, meterReading: '' }));
+      setUnitsComputed(null);
+      setAmountComputed(null);
     } catch (err) {
       setStatus({ type: 'error', msg: 'Failed to update reading. Verify Consumer ID.' });
     } finally {
@@ -110,37 +176,36 @@ function AddReading() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Reading Value */}
-              <div className="space-y-2">
+              {/* Previous Reading & Tariff Info (Left on desktop) */}
+              <div className="space-y-2 md:order-1 order-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Previous Reading / Tariff</label>
+                <div className="rounded-2xl bg-white border border-slate-200 px-4 py-4 text-sm text-slate-700 shadow-sm flex flex-col gap-2">
+                  <div className="flex justify-between"><span className="font-semibold">Previous</span><span className="font-bold">{prevReading !== null ? `${prevReading} kWh` : '--'}</span></div>
+                  <div className="flex justify-between"><span className="font-semibold">Tariff</span><span className="font-bold">{tariffRate !== null ? `Rs.${tariffRate}/unit` : '--'}</span></div>
+                  <div className="flex justify-between"><span className="font-semibold">Units (new - prev)</span><span className="font-bold">{unitsComputed !== null ? unitsComputed : '--'}</span></div>
+                  <div className="flex justify-between"><span className="font-semibold">Amount</span><span className="font-bold">{amountComputed !== null ? `Rs. ${amountComputed.toFixed(2)}` : '--'}</span></div>
+                  <div className="text-[11px] text-slate-500">Logging Date: auto (today)</div>
+                </div>
+              </div>
+
+              {/* Reading Value (Right on desktop) */}
+              <div className="space-y-2 md:order-2 order-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Current kWh</label>
-                <div className="relative">
+                <div className={`relative rounded-2xl border-2 ${unitsComputed !== null && unitsComputed <= 0 ? 'border-rose-200 bg-rose-50/60' : 'border-transparent bg-slate-50'} focus-within:border-teal-500/20 focus-within:bg-white transition-all`}>
                   <Gauge className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
                     type="number"
                     name="meterReading"
-                    placeholder="0.00"
+                    placeholder="Enter latest meter reading"
                     value={reading.meterReading}
                     onChange={handleChange}
                     required
-                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-teal-500/20 focus:bg-white transition-all text-slate-800 font-bold outline-none"
+                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-transparent text-slate-800 font-bold outline-none"
                   />
                 </div>
-              </div>
-
-              {/* Date */}
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Logging Date</label>
-                <div className="relative">
-                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
-                  <input
-                    type="date"
-                    name="readingDate"
-                    value={reading.readingDate}
-                    onChange={handleChange}
-                    required
-                    className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 border-2 border-transparent focus:border-teal-500/20 focus:bg-white transition-all text-slate-800 font-bold outline-none"
-                  />
-                </div>
+                {unitsComputed !== null && unitsComputed <= 0 && (
+                  <p className="text-xs font-semibold text-rose-600">Reading must be greater than previous reading.</p>
+                )}
               </div>
             </div>
 
