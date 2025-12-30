@@ -3,6 +3,16 @@ const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
 
+// Utility to derive payment deadline: reading window ends on 15th, then 15 days to pay
+const computePaymentDeadline = (readingDate) => {
+  const d = new Date(readingDate);
+  const readingWindowEnd = new Date(d.getFullYear(), d.getMonth(), 15, 23, 59, 59);
+  const baseDate = d <= readingWindowEnd ? readingWindowEnd : d;
+  const deadline = new Date(baseDate);
+  deadline.setDate(deadline.getDate() + 15);
+  return deadline;
+};
+
 // Process meter image via AI service
 exports.validateMeterImage = async (req, res) => {
   try {
@@ -96,6 +106,18 @@ exports.validateMeterImage = async (req, res) => {
 
         consumer.currentReading = currentReading;
         consumer.amount = amount;
+
+        // New billing window: reading captured now, payment due 15 days after reading window end (15th)
+        consumer.lastBillDate = new Date();
+        consumer.nextPaymentDeadline = computePaymentDeadline(consumer.lastBillDate);
+        consumer.paymentStatus = 'Pending';
+
+        // Reset any previous penalties when a fresh bill is generated
+        consumer.isFineApplied = false;
+        consumer.fineAmount = 0;
+        consumer.cgstOnFine = 0;
+        consumer.sgstOnFine = 0;
+        consumer.totalFineWithTax = 0;
         
         if (!consumer.readings) consumer.readings = [];
         consumer.readings.push({
@@ -184,6 +206,14 @@ exports.getConsumer = async (req, res) => {
   try {
     const consumer = await Consumer.findOne({ consumerNumber: req.params.consumerNumber });
     if (!consumer) return res.status(404).json({ message: 'Consumer not found' });
+    
+    // Auto-correct status if amount is 0 and status is Pending
+    if (consumer.amount === 0 && consumer.paymentStatus === 'Pending') {
+      consumer.paymentStatus = 'Paid';
+      consumer.nextPaymentDeadline = null;
+      await consumer.save();
+    }
+    
     res.json(consumer);
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -193,9 +223,10 @@ exports.getConsumer = async (req, res) => {
 // Update reading & calculate amount
 exports.addReading = async (req, res) => {
   const { consumerNumber } = req.params;
-  const { unitsConsumed, readingDate } = req.body;
+  const { unitsConsumed, readingDate, currentReading } = req.body;
 
-  if (typeof unitsConsumed !== 'number') {
+  const parsedUnits = Number(unitsConsumed);
+  if (!Number.isFinite(parsedUnits)) {
     return res.status(400).json({ message: 'Invalid unitsConsumed' });
   }
 
@@ -208,7 +239,13 @@ exports.addReading = async (req, res) => {
     const consumer = await Consumer.findOne({ consumerNumber });
     if (!consumer) return res.status(404).json({ message: 'Consumer not found' });
 
-    consumer.currentReading += unitsConsumed;
+    const previous = consumer.currentReading || 0;
+    const newReading = Number.isFinite(currentReading) ? Number(currentReading) : previous + parsedUnits;
+    const computedUnits = newReading - previous;
+
+    if (newReading <= previous) {
+      return res.status(400).json({ message: `Current reading must be greater than previous reading (${previous}).` });
+    }
 
     const tariffRates = {
       domestic: 5,
@@ -219,14 +256,28 @@ exports.addReading = async (req, res) => {
     const rate = tariffRates[consumer.tariffPlan.toLowerCase()];
     if (!rate) return res.status(400).json({ message: 'Invalid tariff plan' });
 
-    consumer.amount = consumer.currentReading * rate;
+    consumer.currentReading = newReading;
+    consumer.amount = computedUnits * rate;
+
+    // Set bill window: reading window ends 15th, +15 days to pay
+    consumer.lastBillDate = parsedDate;
+    consumer.nextPaymentDeadline = computePaymentDeadline(parsedDate);
+    consumer.paymentStatus = 'Pending';
+
+    // Reset fines on new bill
+    consumer.isFineApplied = false;
+    consumer.fineAmount = 0;
+    consumer.cgstOnFine = 0;
+    consumer.sgstOnFine = 0;
+    consumer.totalFineWithTax = 0;
 
     // Add reading entry to history
     if (!consumer.readings) consumer.readings = [];
 
     consumer.readings.push({
       date: parsedDate,
-      units: unitsConsumed
+      units: computedUnits,
+      manualReading: newReading
     });
 
     await consumer.save();
@@ -264,11 +315,14 @@ exports.getConsumerByNumber = async (req, res) => {
 
     // Get the last reading from the readings array
     const lastReading = consumer.readings.length > 0 ? consumer.readings[consumer.readings.length - 1] : null;
+    // Show the actual meter reading (manualReading) instead of last cycle's units
+    const previousMeterReading = lastReading?.manualReading ?? consumer.currentReading ?? 0;
 
     res.json({
       name: consumer.name,
       meterSerialNumber: consumer.meterSerialNumber,
-      previousReading: lastReading ? lastReading.units : 0, // Use the last reading's units or 0 if no readings exist
+      previousReading: previousMeterReading,
+      lastUnitsConsumed: lastReading ? lastReading.units : 0,
       tariffPlan: consumer.tariffPlan,
     });
   } catch (error) {
@@ -279,9 +333,10 @@ exports.getConsumerByNumber = async (req, res) => {
 
 exports.addCitizenReading = async (req, res) => {
   const { consumerNumber } = req.params;
-  const { unitsConsumed, readingDate } = req.body;
+  const { unitsConsumed, readingDate, currentReading } = req.body;
 
-  if (typeof unitsConsumed !== 'number') {
+  const parsedUnits = Number(unitsConsumed);
+  if (!Number.isFinite(parsedUnits)) {
     return res.status(400).json({ message: 'Invalid unitsConsumed' });
   }
 
@@ -291,17 +346,20 @@ exports.addCitizenReading = async (req, res) => {
   }
 
   try {
-    // Find the consumer by consumerNumber
     const consumer = await Consumer.findOne({ consumerNumber });
     if (!consumer) return res.status(404).json({ message: 'Consumer not found' });
 
-    // Ensure the consumer is a citizen (not admin)
     if (consumer.role !== 'citizen') {
       return res.status(403).json({ message: 'You are not authorized to update this reading' });
     }
 
-    // Update the current reading
-    consumer.currentReading += unitsConsumed;
+    const previous = consumer.currentReading || 0;
+    const newReading = Number.isFinite(currentReading) ? Number(currentReading) : previous + parsedUnits;
+    const computedUnits = newReading - previous;
+
+    if (newReading <= previous) {
+      return res.status(400).json({ message: `Current reading must be greater than previous reading (${previous}).` });
+    }
 
     const tariffRates = {
       domestic: 5,
@@ -312,14 +370,24 @@ exports.addCitizenReading = async (req, res) => {
     const rate = tariffRates[consumer.tariffPlan.toLowerCase()];
     if (!rate) return res.status(400).json({ message: 'Invalid tariff plan' });
 
-    consumer.amount = consumer.currentReading * rate;
+    consumer.currentReading = newReading;
+    consumer.amount = computedUnits * rate;
 
-    // Add reading entry to history
+    consumer.lastBillDate = parsedDate;
+    consumer.nextPaymentDeadline = computePaymentDeadline(parsedDate);
+    consumer.paymentStatus = 'Pending';
+
+    consumer.isFineApplied = false;
+    consumer.fineAmount = 0;
+    consumer.cgstOnFine = 0;
+    consumer.sgstOnFine = 0;
+    consumer.totalFineWithTax = 0;
+
     if (!consumer.readings) consumer.readings = [];
-
     consumer.readings.push({
       date: parsedDate,
-      units: unitsConsumed,
+      units: computedUnits,
+      manualReading: newReading
     });
 
     await consumer.save();
@@ -350,17 +418,17 @@ exports.getConsumerDetailsByNumber = async (req, res) => {
   }
 };
 
-// Calculate fine amount with GST/CGST
-const calculateFine = (billAmount) => {
-  const FINE_PERCENTAGE = 0.10; // 10% fine on bill amount
+// Calculate fixed fine amount with GST/CGST
+const calculateFine = () => {
+  const FIXED_FINE = 100; // Flat ₹100 fine
   const CGST = 0.09; // 9% CGST
   const SGST = 0.09; // 9% SGST
-  
-  const fineAmount = billAmount * FINE_PERCENTAGE;
+
+  const fineAmount = FIXED_FINE;
   const cgstOnFine = fineAmount * CGST;
   const sgstOnFine = fineAmount * SGST;
   const totalFineWithTax = fineAmount + cgstOnFine + sgstOnFine;
-  
+
   return {
     fineAmount: parseFloat(fineAmount.toFixed(2)),
     cgstOnFine: parseFloat(cgstOnFine.toFixed(2)),
@@ -376,18 +444,42 @@ exports.getBillSummary = async (req, res) => {
     if (!consumer) return res.status(404).json({ message: 'Consumer not found' });
 
     const now = new Date();
-    const billDeadline = consumer.nextPaymentDeadline ? new Date(consumer.nextPaymentDeadline) : null;
-    
-    // If no deadline, set one based on bill cycle
-    if (!billDeadline) {
-      const newDeadline = new Date();
-      newDeadline.setDate(newDeadline.getDate() + (consumer.billCycleDays || 30));
-      consumer.nextPaymentDeadline = newDeadline;
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const readingWindowEnd = new Date(now.getFullYear(), now.getMonth(), 15, 23, 59, 59);
+
+    // Derive tariff rate and last units consumed for display
+    const tariffRates = {
+      domestic: 5,
+      commercial: 10,
+      industrial: 15,
+    };
+    const tariffRate = tariffRates[(consumer.tariffPlan || '').toLowerCase()] || 0;
+    const lastUnitsConsumed = Array.isArray(consumer.readings) && consumer.readings.length > 0
+      ? consumer.readings[consumer.readings.length - 1].units
+      : null;
+
+    let billDeadline = consumer.nextPaymentDeadline ? new Date(consumer.nextPaymentDeadline) : null;
+
+    // Reading pending if current month window (1-15) hasn't been submitted after payment cleared
+    const readingPending = (!consumer.lastBillDate || consumer.lastBillDate < monthStart) && now <= readingWindowEnd && consumer.paymentStatus === 'Paid';
+
+    // If no deadline exists and the bill is still pending, align to reading window rule
+    if (!billDeadline && consumer.paymentStatus !== 'Paid') {
+      const baseDate = consumer.lastBillDate ? new Date(consumer.lastBillDate) : now;
+      billDeadline = computePaymentDeadline(baseDate);
+      consumer.nextPaymentDeadline = billDeadline;
       await consumer.save();
     }
 
     const daysUntilDeadline = billDeadline ? Math.ceil((billDeadline - now) / (1000 * 60 * 60 * 24)) : 0;
-    const isOverdue = billDeadline && now > billDeadline;
+    const isOverdue = billDeadline && now > billDeadline && consumer.paymentStatus !== 'Paid';
+    
+    // If amount is 0 and status is not explicitly 'Paid', treat as paid (no pending bill)
+    if (consumer.amount === 0 && consumer.paymentStatus === 'Pending') {
+      consumer.paymentStatus = 'Paid';
+      consumer.nextPaymentDeadline = null;
+      await consumer.save();
+    }
     
     // Apply fine if overdue and not already applied
     let totalBillAmount = consumer.amount;
@@ -399,7 +491,7 @@ exports.getBillSummary = async (req, res) => {
     };
 
     if (isOverdue && !consumer.isFineApplied) {
-      fineDetails = calculateFine(consumer.amount);
+      fineDetails = calculateFine();
       consumer.fineAmount = fineDetails.fineAmount;
       consumer.cgstOnFine = fineDetails.cgstOnFine;
       consumer.sgstOnFine = fineDetails.sgstOnFine;
@@ -424,8 +516,12 @@ exports.getBillSummary = async (req, res) => {
     // Determine reminder message
     let reminderMessage = '';
     let reminderType = 'none';
-    
-    if (isOverdue) {
+
+    if (readingPending) {
+      const daysLeftForReading = Math.max(0, Math.ceil((readingWindowEnd - now) / (1000 * 60 * 60 * 24)));
+      reminderType = 'reading';
+      reminderMessage = `Reading required: submit meter reading by ${readingWindowEnd.toDateString()} (${daysLeftForReading} day(s) left).`;
+    } else if (isOverdue) {
       reminderType = 'overdue';
       reminderMessage = `⚠️ OVERDUE: Your bill payment was due on ${billDeadline.toDateString()}. Please pay immediately to avoid further penalties.`;
     } else if (daysUntilDeadline <= 3 && daysUntilDeadline > 0) {
@@ -450,8 +546,11 @@ exports.getBillSummary = async (req, res) => {
       // Bill Details
       billAmount: consumer.amount,
       currentReading: consumer.currentReading,
+      lastUnitsConsumed: lastUnitsConsumed,
+      tariffRate: tariffRate,
       paymentStatus: consumer.paymentStatus,
       lastPaymentDate: consumer.lastPaymentDate,
+      lastPaidAmount: consumer.lastPaidAmount,
       
       // Deadline & Reminder
       billCycleDays: consumer.billCycleDays,
@@ -468,7 +567,12 @@ exports.getBillSummary = async (req, res) => {
       
       // Reminder
       reminderMessage: reminderMessage,
-      reminderType: reminderType
+      reminderType: reminderType,
+
+      // Reading window info
+      readingPending,
+      readingWindowStart: monthStart,
+      readingWindowEnd
     });
   } catch (error) {
     console.error('Error fetching bill summary:', error);
@@ -484,6 +588,8 @@ exports.markPaymentAsPaid = async (req, res) => {
 
     consumer.paymentStatus = 'Paid';
     consumer.lastPaymentDate = new Date();
+    const paidAmount = consumer.amount + (consumer.isFineApplied ? consumer.totalFineWithTax : 0);
+    consumer.lastPaidAmount = parseFloat(paidAmount.toFixed(2));
     // Clear current bill amount once payment is completed
     consumer.amount = 0;
     
@@ -497,10 +603,8 @@ exports.markPaymentAsPaid = async (req, res) => {
     consumer.reminderSent3Days = false;
     consumer.overdueReminderSent = false;
     
-    // Set next deadline for next bill cycle
-    const nextDeadline = new Date();
-    nextDeadline.setDate(nextDeadline.getDate() + (consumer.billCycleDays || 30));
-    consumer.nextPaymentDeadline = nextDeadline;
+    // Await next reading before setting a fresh due date
+    consumer.nextPaymentDeadline = null;
     
     await consumer.save();
 
@@ -519,7 +623,7 @@ exports.getConsumersWithFines = async (req, res) => {
   try {
     const consumersWithFines = await Consumer.find({ 
       isFineApplied: true,
-      isOverdue: true 
+      paymentStatus: { $ne: 'Paid' }
     }).select(
       'consumerNumber name address phoneNumber meterSerialNumber tariffPlan amount fineAmount cgstOnFine sgstOnFine totalFineWithTax fineAppliedDate paymentStatus'
     );

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft } from 'lucide-react';
 import { signup } from '../api/authApi';
 
 const Signup = () => {
@@ -56,6 +57,23 @@ const Signup = () => {
         <div className="absolute bottom-10 right-10 w-20 h-20 border-b-2 border-r-2 border-blue-500/50" />
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
       </div>
+
+      {/* Back to Landing Button */}
+      <button
+        onClick={() => {
+          navigate('/', { replace: true });
+          // Hard fallback if SPA history is empty or swipe back is blocked
+          setTimeout(() => {
+            if (window.location.pathname === '/signup') {
+              window.location.href = '/';
+            }
+          }, 60);
+        }}
+        className="absolute top-6 left-6 z-30 flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-lg text-slate-400 hover:text-white transition-all text-sm font-bold"
+      >
+        <ArrowLeft size={16} />
+        <span className="hidden sm:inline">Back to Home</span>
+      </button>
 
       {/* 3. THE "ENGINEERING" FORM CONTAINER */}
       <motion.div 

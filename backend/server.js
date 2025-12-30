@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 const authRoutes = require('./routes/authRoutes');
 const consumerRoutes = require('./routes/consumerRoutes');
+const billRoutes = require('./routes/billRoutes');
 require('dotenv').config();
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(express.static('uploads')); // Serve uploaded files
 
 app.use('/api/auth', authRoutes);
 app.use('/api/consumers', consumerRoutes); // Add route for consumer operations
+app.use('/api/bills', billRoutes); // Add route for bill calculations
 
 const startServer = async () => {
   try {

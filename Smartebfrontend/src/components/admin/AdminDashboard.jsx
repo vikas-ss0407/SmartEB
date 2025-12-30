@@ -211,7 +211,11 @@ function AdminDashboard({ onLogout }) {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <DataBox label="Legal Name" value={consumerData.name} />
-                        <DataBox label="Outstanding Dues" value={`₹${consumerData.amount?.toFixed(2)}`} highlight />
+                        <DataBox 
+                          label="Outstanding Dues" 
+                          value={consumerData.paymentStatus === 'Paid' || consumerData.amount === 0 ? '₹0.00 (CLEARED)' : `₹${consumerData.amount?.toFixed(2)}`} 
+                          highlight 
+                        />
                         <DataBox label="Tariff Class" value={consumerData.tariffPlan} />
                         <DataBox label="Meter Serial" value={consumerData.meterSerialNumber} />
                         <DataBox label="Contact Info" value={consumerData.phoneNumber} />

@@ -72,6 +72,16 @@ function EReceipt({ onLogout }) {
     if (!summary) return [];
     const notifications = [];
 
+    if (summary.readingPending) {
+      notifications.push({
+        id: 'reading-due',
+        title: 'Reading Required',
+        detail: `Submit meter reading by ${formatShortDate(summary.readingWindowEnd)} (window 1-15).`,
+        severity: 'warning',
+        icon: '🧾'
+      });
+    }
+
     if (summary.paymentStatus === 'Paid') {
       notifications.push({
         id: 'payment-success',
@@ -82,13 +92,24 @@ function EReceipt({ onLogout }) {
         severity: 'success',
         icon: '✅'
       });
-      notifications.push({
-        id: 'next-cycle',
-        title: 'Next Billing Cycle',
-        detail: `Next due date: ${formatShortDate(summary.nextPaymentDeadline)}.`,
-        severity: 'info',
-        icon: '📅'
-      });
+      // Only show next billing cycle if a new reading has been taken
+      if (summary.nextPaymentDeadline) {
+        notifications.push({
+          id: 'next-cycle',
+          title: 'Next Billing Cycle',
+          detail: `Payment due: ${formatShortDate(summary.nextPaymentDeadline)}.`,
+          severity: 'info',
+          icon: '📅'
+        });
+      } else {
+        notifications.push({
+          id: 'awaiting-reading',
+          title: 'Awaiting Next Reading',
+          detail: `Submit your next meter reading during the 1st-15th window.`,
+          severity: 'info',
+          icon: '📊'
+        });
+      }
     } else {
       const days = summary.daysUntilDeadline;
       if (summary.isOverdue) {
@@ -184,50 +205,214 @@ function EReceipt({ onLogout }) {
   }, [location.state]);
 
   const handleDownloadPDF = (data) => {
-  try {
-    const doc = new jsPDF('p', 'mm', 'a4');
-    const pageWidth = doc.internal.pageSize.getWidth();
-    let y = 20;
+    try {
+      const doc = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      let y = 20;
 
-    const safeNum = (v) => Number(v ?? 0).toFixed(2);
+      const safeNum = (v) => Number(v ?? 0).toFixed(2);
+      const fmtDate = (d) => {
+        if (!d) return 'N/A';
+        const dd = new Date(d);
+        if (Number.isNaN(dd.getTime())) return 'N/A';
+        return dd.toLocaleDateString('en-IN');
+      };
 
-    doc.setFillColor(30, 41, 59);
-    doc.rect(0, 0, pageWidth, 32, 'F');
+      const billAmount = Number(data.billAmount ?? 0);
+      const fineAmount = Number(data.fineDetails?.totalFineWithTax ?? 0);
+      const totalDue = Number(data.totalAmountDue ?? billAmount + fineAmount);
+      const paidAmount = data.paymentStatus === 'Paid'
+        ? Number(data.lastPaidAmount ?? totalDue ?? billAmount)
+        : 0;
 
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(18);
-    doc.text('GridVision', 20, 20);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(10);
-    doc.text('Enterprise Electricity Billing Portal', 20, 26);
-
-    y = 42;
-
-    const row = (l, v) => {
-      doc.setFont('helvetica', 'normal');
-      doc.setFontSize(10);
-      doc.setTextColor(0);
-      doc.text(l, 20, y);
+      // Simple Header with borders
+      doc.setLineWidth(0.5);
+      doc.setDrawColor(0, 0, 0);
+      doc.rect(margin, y, pageWidth - 2 * margin, 35);
+      
+      // Title
       doc.setFont('helvetica', 'bold');
-      doc.text(String(v ?? 'N/A'), 90, y);
-      y += 6;
-    };
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text('GridVision Power Utility', pageWidth / 2, y + 10, { align: 'center' });
+      
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Official E-Receipt - Powered Billing Platform', pageWidth / 2, y + 17, { align: 'center' });
+      
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(12);
+      doc.text('Electricity Bill Receipt', pageWidth / 2, y + 27, { align: 'center' });
 
-    row('Consumer Number', data.consumerNumber);
-    row('Consumer Name', data.name);
-    row('Bill Amount', `Rs. ${safeNum(data.billAmount)}`);
-    row('Units Consumed', `${data.currentReading ?? 0}`);
-    row('Payment Status', data.paymentStatus);
-    row('Total Payable', `Rs. ${safeNum(data.totalAmountDue)}`);
+      y += 40;
 
-    doc.save(`GridVision_E-Receipt_${data.consumerNumber}.pdf`);
-  } catch (e) {
-    console.error(e);
-    alert('Unable to generate PDF. Please try again.');
-  }
-};
+      // Payment Status Badge
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      const statusText = data.paymentStatus || 'Pending';
+      const statusWidth = doc.getTextWidth(statusText) + 10;
+      doc.rect(pageWidth - margin - statusWidth, y, statusWidth, 8);
+      doc.text(statusText, pageWidth - margin - statusWidth / 2, y + 6, { align: 'center' });
+
+      y += 12;
+
+      // Consumer Details Box
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('Consumer Details', margin, y);
+      y += 2;
+      doc.rect(margin, y, (pageWidth - 2 * margin) / 2 - 2, 40);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      y += 7;
+      doc.text('Consumer No:', margin + 3, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(data.consumerNumber || 'N/A'), margin + 35, y);
+      
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.text('Name:', margin + 3, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(data.name || 'N/A'), margin + 35, y);
+      
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.text('Meter Serial:', margin + 3, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(data.meterSerialNumber || 'N/A'), margin + 35, y);
+      
+      y += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.text('Tariff Plan:', margin + 3, y);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(data.tariffPlan || 'N/A'), margin + 35, y);
+
+      // Bill Metadata Box (right side)
+      let yRight = y - 28;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('Bill Metadata', pageWidth / 2 + 2, yRight);
+      yRight += 2;
+      doc.rect(pageWidth / 2 + 2, yRight, (pageWidth - 2 * margin) / 2 - 2, 40);
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      yRight += 7;
+      doc.text('Receipt Date:', pageWidth / 2 + 5, yRight);
+      doc.setFont('helvetica', 'bold');
+      doc.text(fmtDate(new Date()), pageWidth / 2 + 35, yRight);
+      
+      yRight += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.text('Billing Cycle:', pageWidth / 2 + 5, yRight);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(data.billCycleDays || 30) + ' days', pageWidth / 2 + 35, yRight);
+      
+      yRight += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.text('Due Date:', pageWidth / 2 + 5, yRight);
+      doc.setFont('helvetica', 'bold');
+      doc.text(fmtDate(data.nextPaymentDeadline), pageWidth / 2 + 35, yRight);
+      
+      yRight += 7;
+      doc.setFont('helvetica', 'normal');
+      doc.text('Payment Status:', pageWidth / 2 + 5, yRight);
+      doc.setFont('helvetica', 'bold');
+      doc.text(String(data.paymentStatus || 'Pending'), pageWidth / 2 + 35, yRight);
+
+      y += 18;
+
+      // Charges Table
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('Charges Breakdown', margin, y);
+      y += 2;
+      
+      // Table Header
+      doc.rect(margin, y, pageWidth - 2 * margin, 8);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      doc.text('Description', margin + 3, y + 6);
+      doc.text('Amount (Rs.)', pageWidth - margin - 30, y + 6, { align: 'right' });
+      
+      y += 8;
+      
+      // Energy Charges Row
+      doc.rect(margin, y, pageWidth - 2 * margin, 7);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Energy Charges', margin + 3, y + 5);
+      doc.text(safeNum(billAmount), pageWidth - margin - 30, y + 5, { align: 'right' });
+      
+      y += 7;
+      
+      // Fines & Tax Row (if applicable)
+      if (fineAmount > 0) {
+        doc.rect(margin, y, pageWidth - 2 * margin, 7);
+        doc.text('Late Payment Fine (incl. GST)', margin + 3, y + 5);
+        doc.text(safeNum(fineAmount), pageWidth - margin - 30, y + 5, { align: 'right' });
+        y += 7;
+      }
+      
+      // Total Row
+      doc.rect(margin, y, pageWidth - 2 * margin, 9);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(11);
+      doc.text(data.paymentStatus === 'Paid' ? 'Amount Paid' : 'Total Payable', margin + 3, y + 6);
+      doc.setFontSize(12);
+      const totalAmount = data.paymentStatus === 'Paid' ? paidAmount : totalDue;
+      doc.text('Rs. ' + safeNum(totalAmount), pageWidth - margin - 30, y + 6, { align: 'right' });
+
+      y += 14;
+
+      // Usage Details Table
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(10);
+      doc.text('Usage Details', margin, y);
+      y += 2;
+      
+      doc.rect(margin, y, pageWidth - 2 * margin, 8);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(9);
+      const col1 = margin + 3;
+      const col2 = margin + (pageWidth - 2 * margin) / 3;
+      const col3 = margin + 2 * (pageWidth - 2 * margin) / 3;
+      
+      doc.text('Current Reading', col1, y + 6);
+      doc.text('Units (kWh)', col2, y + 6);
+      doc.text('Tariff Rate', col3, y + 6);
+      
+      y += 8;
+      doc.rect(margin, y, pageWidth - 2 * margin, 7);
+      doc.setFont('helvetica', 'normal');
+      doc.text(String(data.currentReading ?? '-'), col1, y + 5);
+      doc.text(String(data.lastUnitsConsumed ?? '-'), col2, y + 5);
+      doc.text('Rs.' + safeNum(data.tariffRate || 0) + '/unit', col3, y + 5);
+
+      y += 12;
+
+      // Footer Note
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(8);
+      doc.setTextColor(80, 80, 80);
+      doc.text('This is a computer-generated receipt. Please retain for your records.', pageWidth / 2, y, { align: 'center' });
+      
+      y += 5;
+      doc.text('For support, contact: billing@gridvision.com', pageWidth / 2, y, { align: 'center' });
+
+      // Page border
+      doc.setDrawColor(0, 0, 0);
+      doc.setLineWidth(0.5);
+      doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+
+      doc.save('GridVision_Receipt_' + data.consumerNumber + '.pdf');
+    } catch (e) {
+      console.error(e);
+      alert('Unable to generate PDF. Please try again.');
+    }
+  };
 
   const getReminderColor = (reminderType) => {
     switch (reminderType) {
@@ -381,11 +566,11 @@ function EReceipt({ onLogout }) {
                   <div className="relative">
                     <span className="absolute -left-6 top-2 text-xl font-bold text-slate-400">₹</span>
                     <h2 className="text-6xl font-black text-slate-900 tracking-tighter">
-                      {billSummary.paymentStatus === 'Paid' ? '0.00' : billSummary.totalAmountDue.toFixed(2)}
+                      {billSummary.totalAmountDue.toFixed(2)}
                     </h2>
                   </div>
                   <div className={`mt-6 px-6 py-2 rounded-full text-[10px] font-black tracking-widest uppercase border ${getStatusConfig(billSummary.paymentStatus).text} ${getStatusConfig(billSummary.paymentStatus).border} bg-white shadow-sm`}>
-                    {billSummary.paymentStatus}
+                    {billSummary.totalAmountDue === 0 ? 'CLEARED' : billSummary.paymentStatus}
                   </div>
                 </div>
 

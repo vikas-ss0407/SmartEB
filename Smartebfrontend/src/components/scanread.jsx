@@ -24,7 +24,6 @@ function ScanReadings({ onLogout }) {
   const [currentReading, setCurrentReading] = useState('');
   const [aiExtractedReading, setAiExtractedReading] = useState('');
   const [manualReading, setManualReading] = useState('');
-  const [readingMatch, setReadingMatch] = useState(null);
   const [amount, setAmount] = useState('');
   const [tariff, setTariff] = useState(0);
   const [userName, setUserName] = useState('');
@@ -39,6 +38,19 @@ function ScanReadings({ onLogout }) {
     const storedName = localStorage.getItem('userName') || 'Guest User';
     setUserName(storedName);
   }, []);
+
+  const resetForm = () => {
+    setConsumerNo('');
+    setConsumerName('');
+    setMeterNo('');
+    setPreviousReading('');
+    setCurrentReading('');
+    setManualReading('');
+    setAiExtractedReading('');
+    setAmount('');
+    setUploadedImage(null);
+    setTariff(0);
+  };
 
   const startCamera = async () => {
     try {
@@ -82,50 +94,31 @@ function ScanReadings({ onLogout }) {
     );
   };
 
+  // AI extraction is optional; we keep this helper but no longer require it
   const extractAIReading = async (file) => {
     try {
-      console.log('🔍 Starting AI extraction for file:', file.name);
-      console.log('📤 Sending request to: http://localhost:8000/validate-meter');
-      
       const formData = new FormData();
       formData.append('image', file);
-      formData.append('user_reading', '0'); 
-
-      console.log('📋 FormData prepared with image and user_reading');
+      formData.append('user_reading', '0');
 
       const response = await fetch('http://localhost:8000/validate-meter', {
         method: 'POST',
         body: formData,
       });
 
-      console.log('✅ Response received:', {
-        status: response.status,
-        statusText: response.statusText,
-        ok: response.ok,
-      });
-
       if (response.ok) {
         const data = await response.json();
-        console.log('📊 Full AI Service Response:', JSON.stringify(data, null, 2));
-        
         const meterReading = data.meter_reading ? String(data.meter_reading).trim() : '';
-        console.log('🔄 Trimmed meter_reading:', meterReading);
-        
         if (meterReading !== '') {
           setAiExtractedReading(meterReading);
-          alert(`📊 AI extracted reading: ${meterReading}\n\nNow please enter the reading you see on the meter to verify.`);
         } else {
           setAiExtractedReading('');
-          alert('Could not extract reading from image. Please enter manually.');
         }
       } else {
         setAiExtractedReading('');
-        alert('Could not extract reading from image. Please enter manually.');
       }
     } catch (error) {
-      console.error('❌ Error extracting AI reading:', error);
       setAiExtractedReading('');
-      alert('Could not extract reading from image. Please enter manually.');
     }
   };
 
@@ -159,10 +152,13 @@ function ScanReadings({ onLogout }) {
 
       setConsumerName(data.name || '');
       setMeterNo(data.meterSerialNumber || '');
-      const lastReading = Array.isArray(data.readings) && data.readings.length > 0
-        ? data.readings[data.readings.length - 1].units
-        : data.currentReading ?? 0;
-      setPreviousReading(lastReading);
+      const lastReadingEntry = Array.isArray(data.readings) && data.readings.length > 0
+        ? data.readings[data.readings.length - 1]
+        : null;
+      const previousMeterReading = Number.isFinite(lastReadingEntry?.manualReading)
+        ? lastReadingEntry.manualReading
+        : (data.currentReading ?? 0);
+      setPreviousReading(previousMeterReading);
       setTariff(tariffRateMap[data.tariffPlan] || 0);
     } catch (error) {
       console.error('Fetch error:', error);
@@ -189,17 +185,11 @@ function ScanReadings({ onLogout }) {
 
   const handleManualReadingChange = (value) => {
     setManualReading(value);
-    if (aiExtractedReading) {
-      const isMatch = compareReadings(aiExtractedReading, value);
-      setReadingMatch(isMatch);
-      if (isMatch) {
-        setCurrentReading(value);
-        const prev = parseFloat(previousReading) || 0;
-        const curr = parseFloat(value) || 0;
-        const units = curr - prev;
-        setAmount((units * tariff).toFixed(2));
-      }
-    }
+    setCurrentReading(value);
+    const prev = parseFloat(previousReading) || 0;
+    const curr = parseFloat(value) || 0;
+    const units = curr - prev;
+    setAmount((units * tariff).toFixed(2));
   };
 
   const handleSubmitReading = async () => {
@@ -212,62 +202,34 @@ function ScanReadings({ onLogout }) {
     }
 
     const unitsConsumed = curr - prev;
-    if (unitsConsumed < 0) {
-      alert('Current reading cannot be less than previous reading. Please check your readings again.');
-      return;
-    }
-
-    if (unitsConsumed === 0) {
-      alert('Current reading must be greater than previous reading. No units consumed.');
-      return;
-    }
-
-    if (!uploadedImage) {
-      alert('Please upload or capture an image first.');
-      return;
-    }
-
-    if (!readingMatch) {
-      alert('Please ensure your manual entry matches the AI extracted reading (within 1 unit difference).');
+    if (unitsConsumed <= 0) {
+      alert('Current reading must be greater than previous reading.');
       return;
     }
 
     setIsProcessing(true);
     try {
-      const formData = new FormData();
-      formData.append('image', uploadedImage);
-      formData.append('consumerNumber', consumerNo);
-      formData.append('userReading', curr.toString());
-      formData.append('aiExtractedReading', aiExtractedReading);
-      formData.append('manualReading', manualReading);
-
-      const response = await fetch(`http://localhost:5000/api/consumers/validate-meter-image`, {
-        method: 'POST',
-        body: formData,
+      const response = await fetch(`http://localhost:5000/api/consumers/add-reading/${consumerNo}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          unitsConsumed,
+          currentReading: curr,
+          readingDate: new Date().toISOString(),
+          manualReading: manualReading || currentReading,
+        })
       });
 
       if (!response.ok) {
         const err = await response.json().catch(() => ({}));
-        if (err.status === 'OCR_FAILED') {
-          throw new Error(err.message || 'Could not extract reading from image. Please enter manually.');
-        }
-        throw new Error(err.message || err.reason || 'Failed to validate meter image');
+        throw new Error(err.message || 'Failed to submit reading');
       }
 
       const data = await response.json();
-      
-      if (data.status === 'VALID') {
-        setPreviousReading(curr);
-        setAmount((data.amount || 0).toFixed(2));
-        setUploadedImage(null);
-        setCurrentReading('');
-        setAiExtractedReading('');
-        setManualReading('');
-        setReadingMatch(null);
-        alert(`✓ Reading submitted successfully!\n\nAI Output: ${data.meter_reading}\nManual Entry: ${manualReading}\nUnits Consumed: ${data.units_consumed}\nAmount: ₹${data.amount}`);
-      } else {
-        alert(`Validation failed: ${data.reason || data.message}`);
-      }
+      setPreviousReading(curr);
+      setAmount((data.amount || 0).toFixed(2));
+      resetForm();
+      alert(`✓ Reading submitted successfully! Units: ${unitsConsumed.toFixed(2)} | Amount: ₹${(data.amount || 0).toFixed(2)}`);
     } catch (error) {
       console.error('Submit error:', error);
       alert(error.message || 'Error submitting reading.');
@@ -356,15 +318,6 @@ function ScanReadings({ onLogout }) {
                     </div>
                     <ShieldCheck size={20} className="text-slate-300" />
                   </div>
-                  <div className="bg-indigo-50 p-5 rounded-2xl border border-indigo-100 flex items-center justify-between">
-                    <div>
-                      <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Previous Record</p>
-                      <p className="text-indigo-900 font-black text-2xl">
-                        {previousReading || '0'} <span className="text-sm font-bold">kWh</span>
-                      </p>
-                    </div>
-                    <Zap size={24} className="text-indigo-600 opacity-50" />
-                  </div>
                 </div>
               </div>
             </div>
@@ -448,10 +401,10 @@ function ScanReadings({ onLogout }) {
                   <div className="mt-8 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">AI Detection</label>
+                        <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">AI Detection (optional)</label>
                         <div className="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-inner">
                           <p className="text-3xl font-black text-indigo-400 tracking-tighter">
-                            {aiExtractedReading || '00000'}
+                            {aiExtractedReading || '—'}
                           </p>
                         </div>
                       </div>
@@ -462,22 +415,15 @@ function ScanReadings({ onLogout }) {
                             type="number"
                             value={manualReading}
                             onChange={(e) => handleManualReadingChange(e.target.value)}
-                            className={`w-full p-5 rounded-2xl text-3xl font-black outline-none border-2 transition-all ${
-                              readingMatch === true ? 'border-green-500 bg-green-50 text-green-900' : 
-                              readingMatch === false ? 'border-red-400 bg-red-50 text-red-900' : 'border-slate-200 bg-white focus:border-indigo-500'
-                            }`}
+                            className="w-full p-5 rounded-2xl text-3xl font-black outline-none border-2 border-slate-200 bg-white focus:border-indigo-500 transition-all"
                             placeholder="0.0"
                           />
-                          <div className="absolute right-5 top-1/2 -translate-y-1/2">
-                            {readingMatch === true && <CheckCircle className="text-green-600" />}
-                            {readingMatch === false && <AlertCircle className="text-red-500" />}
-                          </div>
                         </div>
                       </div>
                     </div>
 
                     <button
-                      disabled={!readingMatch || isProcessing}
+                      disabled={isProcessing}
                       onClick={handleSubmitReading}
                       className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-5 rounded-[1.5rem] font-black text-lg transition-all shadow-xl shadow-indigo-100 disabled:opacity-20 disabled:shadow-none flex items-center justify-center gap-3"
                     >

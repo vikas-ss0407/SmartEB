@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ArrowLeft } from 'lucide-react';
 import { login } from '../api/authApi';
 
 function Login({ onLoginSuccess }) {
@@ -57,6 +58,23 @@ function Login({ onLoginSuccess }) {
 
       {/* 2. BACKGROUND SCANLINE EFFECT */}
       <div className="absolute inset-0 pointer-events-none z-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-20" />
+
+      {/* Back to Landing Button */}
+      <button
+        onClick={() => {
+          navigate('/', { replace: true });
+          // Hard fallback if SPA history is empty or swipe back is blocked
+          setTimeout(() => {
+            if (window.location.pathname === '/login') {
+              window.location.href = '/';
+            }
+          }, 60);
+        }}
+        className="absolute top-6 left-6 z-30 flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all text-sm font-bold"
+      >
+        <ArrowLeft size={16} />
+        <span className="hidden sm:inline">Back to Home</span>
+      </button>
 
       {/* 3. LOGIN INTERFACE */}
       <motion.div 

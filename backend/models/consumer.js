@@ -9,6 +9,7 @@ const consumerSchema = new mongoose.Schema({
   tariffPlan: { type: String, enum: ['Domestic', 'Commercial', 'Industrial'], required: true },
   currentReading: { type: Number, default: 0 },
   amount: { type: Number, default: 0 },
+  lastPaidAmount: { type: Number, default: 0 },
 
   // Bill Cycle & Deadline
   billCycleDays: { type: Number, default: 30, enum: [30, 45] }, // 30 or 45 days cycle

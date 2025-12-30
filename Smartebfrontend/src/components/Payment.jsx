@@ -51,105 +51,77 @@ function Payment() {
   };
 
   return (
-    <div className="payment-container" style={styles.container}>
-      {paymentStep === 'idle' && (
-        <>
-          <h1>Confirm Payment</h1>
-          <div style={styles.detailsCard}>
-            <p><strong>Consumer No:</strong> {consumerNo}</p>
-            <p><strong>Name:</strong> {consumerName}</p>
-            <p style={styles.amountText}><strong>Amount Due:</strong> ₹{amount}</p>
-            <p><strong>Due Date:</strong> {dueDate}</p>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 md:p-8 flex items-center justify-center font-sans">
+      <div className="w-full max-w-md">
+        {paymentStep === 'idle' && (
+          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 border border-slate-200">
+            <h1 className="text-2xl md:text-3xl font-black text-slate-800 mb-6 text-center">Confirm Payment</h1>
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 md:p-6 mb-6 space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-semibold text-slate-600">Consumer No:</span>
+                <span className="text-sm font-bold text-slate-800">{consumerNo}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-semibold text-slate-600">Name:</span>
+                <span className="text-sm font-bold text-slate-800">{consumerName}</span>
+              </div>
+              <div className="flex justify-between items-center pt-3 border-t border-slate-200">
+                <span className="text-base font-semibold text-slate-600">Amount Due:</span>
+                <span className="text-2xl md:text-3xl font-black text-emerald-600">₹{amount}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-semibold text-slate-600">Due Date:</span>
+                <span className="text-sm font-bold text-slate-800">{dueDate}</span>
+              </div>
+            </div>
+            <button 
+              onClick={startPaymentFlow} 
+              className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold py-4 px-8 rounded-2xl text-base md:text-lg shadow-xl shadow-blue-200 transition-all active:scale-95"
+            >
+              Proceed with QR Payment
+            </button>
           </div>
-          <button onClick={startPaymentFlow} style={styles.button}>
-            Go with QR
-          </button>
-        </>
-      )}
+        )}
 
-      {paymentStep === 'processing' && (
-        <div style={styles.statusBox}>
-          <div className="loader" style={styles.spinner}></div>
-          <p>Initializing Secure Payment Gateway...</p>
-        </div>
-      )}
-
-      {paymentStep === 'showingQR' && (
-        <div style={styles.qrContainer}>
-          <h2>Scan to Pay</h2>
-          <p>Scan this QR using any UPI App (PhonePe, GPay, Paytm)</p>
-          <div style={styles.qrPlaceholder}>
-             {/* Using a standard dummy QR generator link */}
-            <img 
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=test@upi&pn=SmartEB&am=${amount}&cu=INR`} 
-              alt="Payment QR Code" 
-              style={styles.qrImage}
-            />
+        {paymentStep === 'processing' && (
+          <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 text-center border border-slate-200">
+            <div className="inline-block animate-spin rounded-full h-16 w-16 border-4 border-slate-200 border-t-blue-600 mb-6"></div>
+            <p className="text-lg font-semibold text-slate-700">Initializing Secure Payment Gateway...</p>
           </div>
-          <p style={styles.timerText}>Waiting for payment confirmation... (5s)</p>
-          <div style={styles.progressBar}>
-            <div style={styles.progressFill}></div>
-          </div>
-        </div>
-      )}
+        )}
 
-      {paymentStep === 'success' && (
-        <div style={styles.statusBox}>
-          <div style={styles.successIcon}>✓</div>
-          <h2 style={{ color: '#2ecc71' }}>Payment Successful!</h2>
-          <p>Transaction ID: <strong>{dummyPaymentId}</strong></p>
-          <p>Redirecting you back to home...</p>
-        </div>
-      )}
+        {paymentStep === 'showingQR' && (
+          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 text-center border-2 border-blue-500">
+            <h2 className="text-xl md:text-2xl font-black text-slate-800 mb-3">Scan to Pay</h2>
+            <p className="text-sm text-slate-600 mb-6">Use any UPI App (PhonePe, GPay, Paytm)</p>
+            <div className="bg-slate-50 p-4 md:p-6 rounded-2xl mb-6 inline-block">
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=upi://pay?pa=test@upi&pn=SmartEB&am=${amount}&cu=INR`} 
+                alt="Payment QR Code" 
+                className="w-48 h-48 md:w-56 md:h-56 mx-auto"
+              />
+            </div>
+            <p className="text-sm text-slate-500 italic mb-4">Waiting for payment confirmation... (5s)</p>
+            <div className="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+              <div className="h-full bg-emerald-500 animate-[fillProgress_5s_linear]"></div>
+            </div>
+          </div>
+        )}
+
+        {paymentStep === 'success' && (
+          <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12 text-center border border-emerald-200">
+            <div className="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-5xl text-emerald-600">✓</span>
+            </div>
+            <h2 className="text-2xl md:text-3xl font-black text-emerald-600 mb-4">Payment Successful!</h2>
+            <p className="text-slate-700 mb-2">Transaction ID:</p>
+            <p className="text-lg font-bold text-slate-900 mb-4">{dummyPaymentId}</p>
+            <p className="text-sm text-slate-500">Redirecting you back to home...</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
-
-const styles = {
-  container: { padding: '40px', textAlign: 'center', fontFamily: 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif' },
-  detailsCard: { 
-    border: '1px solid #ddd', 
-    padding: '20px', 
-    borderRadius: '12px', 
-    display: 'inline-block',
-    textAlign: 'left',
-    marginBottom: '20px',
-    backgroundColor: '#fff',
-    boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-  },
-  amountText: { fontSize: '1.4rem', color: '#2ecc71', margin: '10px 0' },
-  button: { 
-    padding: '15px 40px', 
-    backgroundColor: '#007bff', 
-    color: '#fff', 
-    border: 'none', 
-    borderRadius: '30px', 
-    cursor: 'pointer',
-    fontSize: '1.1rem',
-    fontWeight: 'bold',
-    transition: '0.3s'
-  },
-  qrContainer: { 
-    padding: '30px', 
-    backgroundColor: '#f8f9fa', 
-    borderRadius: '15px', 
-    display: 'inline-block',
-    border: '2px solid #007bff'
-  },
-  qrPlaceholder: { backgroundColor: '#fff', padding: '15px', borderRadius: '10px', margin: '20px 0' },
-  qrImage: { width: '200px', height: '200px' },
-  statusBox: { padding: '50px' },
-  successIcon: { fontSize: '4rem', color: '#2ecc71', marginBottom: '20px' },
-  timerText: { color: '#666', fontStyle: 'italic' },
-  progressBar: { width: '100%', height: '8px', backgroundColor: '#eee', borderRadius: '4px', marginTop: '10px', overflow: 'hidden' },
-  progressFill: { 
-    width: '100%', 
-    height: '100%', 
-    backgroundColor: '#2ecc71', 
-    animation: 'fillProgress 5s linear' 
-  },
-  // Note: For the animation to work, you would usually add a CSS file. 
-  // I've kept it simple with inline styles.
-};
 
 export default Payment;

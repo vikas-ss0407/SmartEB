@@ -1,19 +1,20 @@
 // Utility functions for bill calculations and reminders
+// These calculations run on the server to ensure data integrity
 
-export const calculateDaysUntilDeadline = (deadlineDate) => {
+const calculateDaysUntilDeadline = (deadlineDate) => {
   const now = new Date();
   const deadline = new Date(deadlineDate);
   const daysRemaining = Math.ceil((deadline - now) / (1000 * 60 * 60 * 24));
   return daysRemaining;
 };
 
-export const isOverdue = (deadlineDate) => {
+const isOverdue = (deadlineDate) => {
   const now = new Date();
   const deadline = new Date(deadlineDate);
   return now > deadline;
 };
 
-export const getReminderType = (daysUntilDeadline, isOverdue) => {
+const getReminderType = (daysUntilDeadline, isOverdue) => {
   if (isOverdue) return 'overdue';
   if (daysUntilDeadline <= 3 && daysUntilDeadline > 0) return 'urgent';
   if (daysUntilDeadline <= 7 && daysUntilDeadline > 3) return 'warning';
@@ -21,12 +22,12 @@ export const getReminderType = (daysUntilDeadline, isOverdue) => {
   return 'none';
 };
 
-export const calculateFine = (billAmount) => {
-  const FINE_PERCENTAGE = 0.10; // 10% fine
+const calculateFine = () => {
+  const FIXED_FINE = 100; // Flat fine amount
   const CGST = 0.09; // 9% CGST
   const SGST = 0.09; // 9% SGST
   
-  const fineAmount = billAmount * FINE_PERCENTAGE;
+  const fineAmount = FIXED_FINE;
   const cgstOnFine = fineAmount * CGST;
   const sgstOnFine = fineAmount * SGST;
   const totalFineWithTax = fineAmount + cgstOnFine + sgstOnFine;
@@ -39,7 +40,7 @@ export const calculateFine = (billAmount) => {
   };
 };
 
-export const generateReminderMessage = (reminderType, daysUntilDeadline, deadlineDate) => {
+const generateReminderMessage = (reminderType, daysUntilDeadline, deadlineDate) => {
   const date = new Date(deadlineDate).toDateString();
   
   switch (reminderType) {
@@ -56,13 +57,45 @@ export const generateReminderMessage = (reminderType, daysUntilDeadline, deadlin
   }
 };
 
-export const formatCurrency = (amount) => {
+const getTotalAmountDue = (billAmount, fineDetails) => {
+  if (fineDetails && fineDetails.totalFineWithTax) {
+    return parseFloat((billAmount + fineDetails.totalFineWithTax).toFixed(2));
+  }
+  return parseFloat(billAmount.toFixed(2));
+};
+
+const formatCurrency = (amount) => {
   return `₹${parseFloat(amount).toFixed(2)}`;
 };
 
-export const getTotalAmountDue = (billAmount, fineDetails) => {
-  if (fineDetails && fineDetails.totalFineWithTax) {
-    return billAmount + fineDetails.totalFineWithTax;
-  }
-  return billAmount;
+// Calculate complete bill details including fines and reminders
+const calculateBillDetails = (billAmount, deadlineDate) => {
+  const daysUntilDeadline = calculateDaysUntilDeadline(deadlineDate);
+  const overdueStatus = isOverdue(deadlineDate);
+  const reminderType = getReminderType(daysUntilDeadline, overdueStatus);
+  const fineDetails = overdueStatus ? calculateFine() : null;
+  const totalAmountDue = getTotalAmountDue(billAmount, fineDetails);
+  const reminderMessage = generateReminderMessage(reminderType, daysUntilDeadline, deadlineDate);
+
+  return {
+    billAmount: parseFloat(billAmount.toFixed(2)),
+    deadlineDate,
+    daysUntilDeadline,
+    isOverdue: overdueStatus,
+    reminderType,
+    fineDetails,
+    totalAmountDue,
+    reminderMessage
+  };
+};
+
+module.exports = {
+  calculateDaysUntilDeadline,
+  isOverdue,
+  getReminderType,
+  calculateFine,
+  generateReminderMessage,
+  getTotalAmountDue,
+  formatCurrency,
+  calculateBillDetails
 };
