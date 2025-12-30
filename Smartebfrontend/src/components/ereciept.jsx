@@ -618,20 +618,6 @@ function EReceipt({ onLogout }) {
           </div>
         )}
       </main>
-
-      {/* Corporate Footer */}
-      <footer className="bg-white border-t border-slate-200 pt-16 pb-8">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center space-y-4">
-            <p className="text-slate-400 text-xs font-medium">© 2025 Smart Electricity Board. All system activities are logged for security purposes.</p>
-            <div className="flex justify-center gap-8 text-[10px] font-bold text-indigo-500 uppercase tracking-widest">
-              <a href="#" className="hover:text-slate-900 transition-colors">Help Desk</a>
-              <a href="#" className="hover:text-slate-900 transition-colors">Digital Privacy</a>
-              <a href="#" className="hover:text-slate-900 transition-colors">Accessibility</a>
-            </div>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

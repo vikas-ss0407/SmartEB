@@ -447,20 +447,6 @@ function ScanReadings({ onLogout }) {
           </div>
         </div>
       </main>
-
-      {/* GRIDVISION FOOTER */}
-      <footer className="bg-white border-t border-slate-200 py-8 mt-12">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div className="flex items-center gap-2">
-            <Zap size={14} className="text-indigo-600" />
-            <p className="text-slate-500 text-sm font-bold">© 2025 eMeter Seva Services Pvt Ltd</p>
-          </div>
-          <div className="flex gap-8 text-xs font-black text-slate-400 uppercase tracking-widest">
-            <a href="/privacy" className="hover:text-indigo-600 transition-colors">Privacy Architecture</a>
-            <a href="/terms" className="hover:text-indigo-600 transition-colors">Service Terms</a>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

@@ -68,7 +68,7 @@ function About() {
               The Objective
             </h3>
             <p className="text-slate-400 text-lg leading-relaxed relative z-10">
-              Our advanced <span className="text-white">Neural-OCR engine</span> eliminates the friction of manual utility reporting. By empowering users to act as their own data-entry point, eMeter Seva reduces official overhead by <span className="text-teal-400">85%</span> while ensuring that billing transparency is absolute and unalterable.
+              Our advanced <span className="text-white">OCR engine</span> eliminates the friction of manual utility reporting. By empowering users to act as their own data-entry point, eMeter Seva reduces official overhead by <span className="text-teal-400">85%</span> while ensuring that billing transparency is absolute and unalterable.
             </p>
           </motion.div>
 

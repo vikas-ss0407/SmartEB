@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useSpring, useTransform, AnimatePresence } from 'framer-motion';
 import manImage from '../assets/man.png';
-import quickPayImage from '../assets/Cash-Drawing.png';
+import quickPayImage from '../assets/Cash.png';
 import eReceiptImage from '../assets/MONEY.png';
 
 // Premium Animation Presets
@@ -48,7 +48,7 @@ function Landing() {
           <div className="hidden md:flex items-center gap-10 text-[18px] font-black uppercase tracking-[0.2em] text-slate-400">
             <button onClick={() => navigate('/about')} className="hover:text-teal-400 transition-colors">About</button>
             <button onClick={() => navigate('/login')} className="hover:text-teal-400 transition-colors">Login</button>
-            <button onClick={() => navigate('/signup')} className="bg-teal-500 text-black px-6 py-3 rounded-xl hover:bg-white transition-all shadow-lg">Join Network</button>
+            <button onClick={() => navigate('/signup')} className="bg-teal-500 text-black px-6 py-3 rounded-xl hover:bg-white transition-all shadow-lg">Register</button>
           </div>
         </div>
       </nav>
@@ -61,16 +61,16 @@ function Landing() {
               <span className="inline-block px-3 py-1 mb-6 text-[10px] font-black tracking-[0.4em] text-teal-400 uppercase bg-teal-400/10 border border-teal-400/20 rounded-md">
                 Industry Standard AI
               </span>
-              <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[9rem] font-black leading-[0.9] md:leading-[0.85] tracking-tighter uppercase italic mb-6 sm:mb-8">
+              <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[6rem] font-black leading-[0.9] md:leading-[0.85] tracking-tighter uppercase italic mb-6 sm:mb-8">
                 The Power <br />
                 <span className="stroke-text">of Vision.</span>
               </h1>
               <p className="text-xl text-slate-400 max-w-xl leading-relaxed mb-10 border-l-4 border-teal-500 pl-6">
-                eMeter Seva utilizes neural-mesh OCR to convert physical meter dials into verifiable digital data. Eliminate manual errors and automate your utility workflow instantly.
+                eMeter Seva utilizes OCR to convert physical meter dials into verifiable digital data. Eliminate manual errors and automate your utility workflow instantly.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-                <button onClick={() => navigate('/scanread')} className="px-8 sm:px-10 py-4 sm:py-5 bg-white text-black font-black rounded-2xl hover:bg-teal-500 transition-all uppercase tracking-widest text-sm">Launch Scanner</button>
-                <button onClick={() => navigate('/quickpage')} className="px-8 sm:px-10 py-4 sm:py-5 bg-slate-900 border border-white/10 font-black rounded-2xl hover:bg-slate-800 transition-all uppercase tracking-widest text-sm">Quick Pay</button>
+                <button onClick={() => navigate('/signup')} className="px-8 sm:px-10 py-4 sm:py-5 bg-white text-black font-black rounded-2xl hover:bg-teal-500 transition-all uppercase tracking-widest text-sm">Get Started</button>
+                <button onClick={() => navigate('/login')} className="px-8 sm:px-10 py-4 sm:py-5 bg-slate-900 border border-white/10 font-black rounded-2xl hover:bg-slate-800 transition-all uppercase tracking-widest text-sm">Access Portal</button>
               </div>
             </motion.div>
           </div>
@@ -89,7 +89,7 @@ function Landing() {
                   whileHover={{ scale: 1.05, y: -5 }}
                   className={`bg-slate-900/60 backdrop-blur-xl border ${item.color} p-8 rounded-[2.5rem] flex flex-col items-center shadow-2xl`}
                 >
-                  {item.img ? <img src={item.img} className="h-20 w-20 object-contain mb-4" /> : <span className="text-5xl mb-4">{item.icon}</span>}
+                  {item.img ? <img src={item.img} className="h-28 w-28 rounded-full object-cover mb-4" /> : <span className="text-5xl mb-4">{item.icon}</span>}
                   <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-500">{item.label}</span>
                 </motion.div>
               ))}
@@ -117,7 +117,7 @@ function Landing() {
             </div>
 
             {[
-              { title: "Capture", desc: "Our neural engine isolates the meter display via high-speed scan.", icon: "📸" },
+              { title: "Capture", desc: "Our OCR engine isolates the meter display via high-speed scan.", icon: "📸" },
               { title: "Analyze", desc: "OCR parsing extracts the KWh digits with 99.9% precision.", icon: "⚙️" },
               { title: "Resolve", desc: "One-tap payment clearing with instant digital receipts.", icon: "💳" }
             ].map((step, idx) => (
