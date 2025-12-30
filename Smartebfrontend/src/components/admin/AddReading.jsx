@@ -137,7 +137,7 @@ function AddReading() {
 
         {/* Header Section - Internal overflow hidden for rounded top */}
         <div className="bg-slate-900 pt-16 pb-8 px-8 text-center rounded-t-[2.5rem] overflow-hidden">
-          <h2 className="text-2xl font-black text-white tracking-tight">GridVision Intake</h2>
+          <h2 className="text-2xl font-black text-white tracking-tight">eMeter Seva Intake</h2>
           <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">Telemetry Intake & Meter Logging</p>
         </div>
 
@@ -162,7 +162,7 @@ function AddReading() {
                 <input
                   type="text"
                   name="consumerNumber"
-                  placeholder="e.g. GV-992031"
+                  placeholder="e.g. ES-992031"
                   value={reading.consumerNumber}
                   onChange={handleChange}
                   required
@@ -218,7 +218,7 @@ function AddReading() {
       </div>
 
       <p className="mt-12 text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em]">
-        Secured GridVision Telemetry Link
+        Secured eMeter Seva Telemetry Link
       </p>
     </div>
   );

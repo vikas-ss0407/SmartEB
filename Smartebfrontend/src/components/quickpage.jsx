@@ -111,7 +111,7 @@ function QuickPay({ onLogout }) {
             <div className="bg-indigo-600 p-1.5 rounded-lg shadow-lg shadow-indigo-200 group-hover:scale-110 transition-transform">
               <Zap className="text-white w-5 h-5" fill="currentColor" />
             </div>
-            <span className="text-xl font-black tracking-tight text-slate-800">Grid<span className="text-indigo-600">Vision</span></span>
+            <span className="text-xl font-black tracking-tight text-slate-800">eMeter<span className="text-indigo-600"> Seva</span></span>
           </div>
           
           <div className="flex items-center gap-4">
@@ -281,7 +281,7 @@ function QuickPay({ onLogout }) {
                     <div className="space-y-4 bg-slate-50 p-6 rounded-[2rem]">
                         <div className="space-y-1">
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Account Name</p>
-                          <input type="text" defaultValue="GridVision SmartEB Services" className="w-full bg-transparent border-b-2 border-slate-200 py-2 outline-none font-bold text-slate-700" />
+                          <input type="text" defaultValue="eMeter Seva Services" className="w-full bg-transparent border-b-2 border-slate-200 py-2 outline-none font-bold text-slate-700" />
                         </div>
                         <div className="space-y-1">
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Account Number</p>

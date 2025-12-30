@@ -26,7 +26,7 @@ function About() {
         <div className="max-w-7xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-4 cursor-pointer" onClick={() => navigate('/')}>
             <div className="w-10 h-10 bg-teal-500 flex items-center justify-center rounded-lg shadow-[0_0_20px_rgba(20,184,166,0.3)]">
-              <span className="text-black font-black">GV</span>
+              <span className="text-black font-black">ES</span>
             </div>
             <h1 className="text-xl font-black uppercase tracking-tighter italic">About <span className="text-teal-500">System</span></h1>
           </div>
@@ -48,7 +48,7 @@ function About() {
             The Digital <br /> <span className="text-transparent stroke-text">Infrastructure</span>
           </h2>
           <p className="text-slate-500 max-w-2xl text-lg font-medium leading-relaxed">
-            GridVision is a decentralized energy monitoring protocol designed to bridge the gap between legacy analog hardware and modern cloud accounting.
+            eMeter Seva is a decentralized energy monitoring protocol designed to bridge the gap between legacy analog hardware and modern cloud accounting.
           </p>
         </motion.div>
 
@@ -68,7 +68,7 @@ function About() {
               The Objective
             </h3>
             <p className="text-slate-400 text-lg leading-relaxed relative z-10">
-              Our advanced <span className="text-white">Neural-OCR engine</span> eliminates the friction of manual utility reporting. By empowering users to act as their own data-entry point, GridVision reduces official overhead by <span className="text-teal-400">85%</span> while ensuring that billing transparency is absolute and unalterable.
+              Our advanced <span className="text-white">Neural-OCR engine</span> eliminates the friction of manual utility reporting. By empowering users to act as their own data-entry point, eMeter Seva reduces official overhead by <span className="text-teal-400">85%</span> while ensuring that billing transparency is absolute and unalterable.
             </p>
           </motion.div>
 
@@ -165,7 +165,7 @@ function About() {
 
       <footer className="py-20 border-t border-white/5 px-6 bg-black">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-10 opacity-40">
-          <p className="text-[10px] font-black uppercase tracking-[0.5em]">GridVision Infrastructure © 2025</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.5em]">eMeter Seva Infrastructure © 2025</p>
           <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest">
             <a href="#" className="hover:text-white">Privacy Protocol</a>
             <a href="#" className="hover:text-white">Terms of Access</a>

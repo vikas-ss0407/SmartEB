@@ -219,7 +219,7 @@ function AddConsumer() {
       </div>
 
       <p className="mt-8 text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em]">
-        GridVision Administrative Portal
+        eMeter Seva Administrative Portal
       </p>
     </div>
   );

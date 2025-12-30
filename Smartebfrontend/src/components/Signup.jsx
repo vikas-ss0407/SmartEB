@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { signup } from '../api/authApi';
@@ -11,11 +11,6 @@ const Signup = () => {
     password: '', address: '', phoneNo: '', role: 'citizen'
   });
   const [isLoading, setIsLoading] = useState(false);
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    if (videoRef.current) videoRef.current.play().catch(() => {});
-  }, []);
 
   const handleChange = e => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -36,158 +31,192 @@ const Signup = () => {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center p-6 overflow-hidden bg-[#0a0a0c] font-mono">
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       
-      {/* 1. INDUSTRIAL ANIMATED BACKGROUND */}
+      {/* Animated Background Grid */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-orange-600/10 via-transparent to-blue-600/10 z-10" />
-        <video
-          ref={videoRef}
-          autoPlay loop muted playsInline
-          className="w-full h-full object-cover opacity-30 grayscale contrast-150"
-        >
-          {/* Using an abstract mechanical/industrial movement video */}
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-mechanical-parts-of-a-clock-running-4321-large.mp4" type="video/mp4" />
-        </video>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_110%)] opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-teal-500/5 via-transparent to-indigo-500/5" />
       </div>
 
-      {/* 2. HUD OVERLAY: GRID & CORNER BRACKETS */}
+      {/* Corner Accents */}
       <div className="absolute inset-0 z-10 pointer-events-none">
-        <div className="absolute top-10 left-10 w-20 h-20 border-t-2 border-l-2 border-orange-500/50" />
-        <div className="absolute bottom-10 right-10 w-20 h-20 border-b-2 border-r-2 border-blue-500/50" />
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        <div className="absolute top-8 left-8 w-16 h-16 border-t-2 border-l-2 border-teal-500/30" />
+        <div className="absolute bottom-8 right-8 w-16 h-16 border-b-2 border-r-2 border-teal-500/30" />
       </div>
 
-      {/* Back to Landing Button */}
+      {/* Back Button */}
       <button
-        onClick={() => {
-          navigate('/', { replace: true });
-          // Hard fallback if SPA history is empty or swipe back is blocked
-          setTimeout(() => {
-            if (window.location.pathname === '/signup') {
-              window.location.href = '/';
-            }
-          }, 60);
-        }}
-        className="absolute top-6 left-6 z-30 flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-lg text-slate-400 hover:text-white transition-all text-sm font-bold"
+        onClick={() => navigate('/')}
+        className="absolute top-6 left-6 z-30 flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 rounded-lg text-slate-300 hover:text-white transition-all text-sm font-semibold"
       >
         <ArrowLeft size={16} />
-        <span className="hidden sm:inline">Back to Home</span>
+        <span className="hidden sm:inline">Back</span>
       </button>
 
-      {/* 3. THE "ENGINEERING" FORM CONTAINER */}
+      {/* Main Form Container */}
       <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
+        initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative z-20 w-full max-w-5xl bg-[#121216] border border-white/10 rounded-sm shadow-[0_0_80px_rgba(0,0,0,0.5)] overflow-hidden"
+        transition={{ duration: 0.3 }}
+        className="relative z-20 w-full max-w-5xl bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden"
       >
-        {/* TOP STATUS BAR */}
-        <div className="bg-orange-500 h-1 w-full animate-pulse" />
-        <div className="flex items-center justify-between px-6 py-3 bg-white/5 border-b border-white/10">
-          <div className="flex items-center gap-4">
-            <span className="text-orange-500 text-xs font-black animate-pulse">● SYSTEM_IDLE</span>
-            <span className="text-white/30 text-[10px] tracking-[0.3em]">REF: REG-2025-X</span>
-          </div>
-          <div className="text-white/30 text-[10px]">AUTH_LEVEL: 01</div>
-        </div>
-
-        <div className="flex flex-col lg:flex-row">
-          {/* SIDE LOGS PANEL */}
-          <div className="lg:w-64 bg-black/40 p-6 border-r border-white/10 hidden lg:block">
-            <h3 className="text-orange-500 text-[10px] font-black mb-8 tracking-widest uppercase italic">Diagnostic Data</h3>
-            <div className="space-y-6 text-[9px] text-white/40">
-              <div>
-                <p className="text-white/60 mb-1 font-bold tracking-widest underline">HARDWARE_SCAN</p>
-                <p>MEMORY: 64GB_ECC</p>
-                <p>STATUS: OPTIMAL</p>
-              </div>
-              <div className="pt-4 border-t border-white/5">
-                <p className="text-white/60 mb-1 font-bold tracking-widest underline">ENCRYPTION</p>
-                <p>TYPE: SHA-256</p>
-                <p>KEY_GEN: ACTIVE</p>
+        {/* Header with Brand */}
+        <div className="bg-gradient-to-r from-teal-600 to-indigo-600 px-8 py-6 border-b border-white/10">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-2">
+                eMeter<span className="text-teal-200"> Seva</span>
+              </h1>
+              <p className="text-teal-100/80 text-sm font-medium">Create New Account</p>
+            </div>
+            <div className="hidden sm:block">
+              <div className="w-16 h-16 bg-teal-400/20 backdrop-blur-sm rounded-xl flex items-center justify-center border border-teal-300/30">
+                <span className="text-white font-black text-2xl">ES</span>
               </div>
             </div>
           </div>
+        </div>
 
-          {/* MAIN FORM AREA */}
+        <div className="flex flex-col lg:flex-row">
+          {/* Side Panel - Info Section */}
+          <div className="lg:w-72 bg-gradient-to-b from-slate-800/50 to-slate-900/50 p-8 border-r border-white/5 hidden lg:block">
+            <h3 className="text-teal-400 text-sm font-bold mb-6 uppercase tracking-wide">Account Benefits</h3>
+            <div className="space-y-6 text-sm text-slate-300">
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-teal-400 font-bold">✓</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-white mb-1">Real-time Monitoring</p>
+                  <p className="text-xs text-slate-400">Track your energy consumption instantly</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-teal-400 font-bold">✓</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-white mb-1">AI-Powered OCR</p>
+                  <p className="text-xs text-slate-400">Automatic meter reading extraction</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                  <span className="text-teal-400 font-bold">✓</span>
+                </div>
+                <div>
+                  <p className="font-semibold text-white mb-1">Digital Receipts</p>
+                  <p className="text-xs text-slate-400">Download & share bill history</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-10 pt-6 border-t border-white/5">
+              <p className="text-[10px] text-slate-500 uppercase tracking-wider">Secure & Encrypted</p>
+              <p className="text-xs text-slate-400 mt-2">Your data is protected with industry-standard encryption</p>
+            </div>
+          </div>
+
+          {/* Main Form Area */}
           <div className="flex-1 p-8 lg:p-12">
-            <header className="mb-10">
-              <h2 className="text-3xl font-black text-white italic tracking-tighter">
-                ACCOUNT_<span className="text-orange-500">PROVISIONING</span>
+            <header className="mb-8">
+              <h2 className="text-2xl font-bold text-white tracking-tight">
+                Registration Form
               </h2>
-              <p className="text-white/40 text-[10px] mt-2 tracking-[0.5em] uppercase">Enter required parameters to initialize node</p>
+              <p className="text-slate-400 text-sm mt-1">Fill in your details to get started</p>
             </header>
 
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-6">
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[
-                { label: 'USER_NAME', name: 'name', type: 'text', placeholder: 'ID_ALPHA' },
-                { label: 'PATERNAL_ID', name: 'fatherName', type: 'text', placeholder: 'ID_BETA' },
-                { label: 'TIMESTAMP_DOB', name: 'dob', type: 'date' },
-                { label: 'COMMS_CHANNEL', name: 'email', type: 'email', placeholder: 'USER@GRID.IO' },
-                { label: 'SEC_PROTOCOL', name: 'password', type: 'password', placeholder: '••••••••' },
-                { label: 'MOBILE_UPLINK', name: 'phoneNo', type: 'tel', placeholder: '10-DIGIT_INT' },
+                { label: 'Full Name', name: 'name', type: 'text', placeholder: 'Enter your full name' },
+                { label: "Father's Name", name: 'fatherName', type: 'text', placeholder: "Enter father's name" },
+                { label: 'Date of Birth', name: 'dob', type: 'date' },
+                { label: 'Email Address', name: 'email', type: 'email', placeholder: 'user@example.com' },
+                { label: 'Password', name: 'password', type: 'password', placeholder: 'Create a strong password' },
+                { label: 'Phone Number', name: 'phoneNo', type: 'tel', placeholder: '10-digit mobile number' },
               ].map((f) => (
-                <div key={f.name} className="relative group">
-                  <label className="block text-[10px] font-black text-white/40 mb-2 group-focus-within:text-orange-500 transition-colors uppercase tracking-widest">
+                <div key={f.name} className="space-y-2">
+                  <label className="block text-sm font-semibold text-slate-300">
                     {f.label}
                   </label>
                   <input
-                    name={f.name} type={f.type} placeholder={f.placeholder} onChange={handleChange} required
-                    className="w-full bg-transparent border-b border-white/20 py-2 text-sm text-white focus:border-orange-500 outline-none transition-all placeholder:text-white/10"
+                    name={f.name} 
+                    type={f.type} 
+                    placeholder={f.placeholder} 
+                    onChange={handleChange} 
+                    required
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all"
                   />
-                  <div className="absolute bottom-0 left-0 h-[1px] w-0 bg-orange-500 group-focus-within:w-full transition-all duration-500" />
                 </div>
               ))}
 
-              <div className="md:col-span-2 relative group">
-                <label className="block text-[10px] font-black text-white/40 mb-2 group-focus-within:text-orange-500 transition-colors uppercase tracking-widest">STATION_ADDRESS_LOCATION</label>
+              <div className="md:col-span-2 space-y-2">
+                <label className="block text-sm font-semibold text-slate-300">Address</label>
                 <input
-                  name="address" onChange={handleChange} required
-                  className="w-full bg-transparent border-b border-white/20 py-2 text-sm text-white focus:border-orange-500 outline-none transition-all"
+                  name="address" 
+                  onChange={handleChange} 
+                  placeholder="Enter your complete address"
+                  required
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all"
                 />
               </div>
 
-              <div className="relative group">
-                <label className="block text-[10px] font-black text-white/40 mb-2 group-focus-within:text-orange-500 transition-colors uppercase tracking-widest">ASSIGN_ROLE</label>
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-300">Role</label>
                 <select 
-                  name="role" onChange={handleChange}
-                  className="w-full bg-transparent border-b border-white/20 py-2 text-sm text-white focus:border-orange-500 outline-none transition-all cursor-pointer appearance-none"
+                  name="role" 
+                  onChange={handleChange}
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all cursor-pointer"
                 >
-                  <option value="citizen" className="bg-[#121216]">OPERATOR (CITIZEN)</option>
-                  <option value="admin" className="bg-[#121216]">COMMANDER (ADMIN)</option>
+                  <option value="citizen" className="bg-slate-800">Citizen</option>
+                  <option value="admin" className="bg-slate-800">Admin</option>
                 </select>
               </div>
 
-              <div className="flex items-end">
+              <div className="flex items-end md:col-span-2">
                 <button 
                   type="submit" 
                   disabled={isLoading}
-                  className="w-full bg-white text-black font-black text-xs py-4 hover:bg-orange-500 hover:text-white transition-all group flex items-center justify-center gap-3"
+                  className="w-full bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-500 hover:to-indigo-500 text-white font-bold text-sm py-4 px-6 rounded-lg transition-all shadow-lg shadow-teal-500/20 hover:shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {isLoading ? 'SYNCING...' : (
+                  {isLoading ? (
                     <>
-                      INITIALIZE_NODE
-                      <span className="group-hover:translate-x-2 transition-transform">→</span>
+                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Creating Account...
+                    </>
+                  ) : (
+                    <>
+                      Create Account
+                      <span className="text-lg">→</span>
                     </>
                   )}
                 </button>
               </div>
             </form>
             
-            <div className="mt-12 flex items-center gap-4 text-[9px] font-black">
-              <span className="text-white/20 uppercase tracking-widest">Already have an ID?</span>
-              <button onClick={() => navigate('/login')} className="text-orange-500 hover:underline">RETURN_TO_BASE</button>
+            <div className="mt-8 pt-6 border-t border-white/10 text-center">
+              <p className="text-slate-400 text-sm">
+                Already have an account?{' '}
+                <button 
+                  onClick={() => navigate('/login')} 
+                  className="text-teal-400 hover:text-teal-300 font-semibold hover:underline transition-colors"
+                >
+                  Sign In
+                </button>
+              </p>
             </div>
           </div>
         </div>
-      </motion.div>
 
-      {/* 4. FOOTER TELEMETRY */}
-      <div className="absolute bottom-6 left-6 text-white/10 text-[8px] flex gap-8 select-none">
-        <span>LATENCY: 12ms</span>
-        <span>UPTIME: 99.9%</span>
-        <span>ENCODING: UTF-8</span>
-      </div>
+        {/* Footer */}
+        <div className="bg-slate-900/50 px-8 py-4 border-t border-white/5 text-center">
+          <p className="text-slate-500 text-xs">© 2025 eMeter Seva Infrastructure. Secure & Encrypted.</p>
+        </div>
+      </motion.div>
     </div>
   );
 };

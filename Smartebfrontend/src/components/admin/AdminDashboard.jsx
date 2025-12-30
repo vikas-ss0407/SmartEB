@@ -32,7 +32,7 @@ function AdminDashboard({ onLogout }) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
-    document.title = "GridVision | Admin Dashboard";
+    document.title = "eMeter Seva | Admin Dashboard";
     fetchConsumers();
   }, []);
 
@@ -71,7 +71,7 @@ function AdminDashboard({ onLogout }) {
         setConsumerData(res.data);
       } else {
         setConsumerData(null);
-        setErrorMessage('Consumer not found in GridVision registry.');
+        setErrorMessage('Consumer not found in eMeter Seva registry.');
       }
     } catch (err) {
       setConsumerData(null);
@@ -93,7 +93,7 @@ function AdminDashboard({ onLogout }) {
     setErrorMessage('');
     try {
       await httpClient.delete(`/consumers/${consumerNumber}`);
-      setMessage(`Consumer ${consumerNumber} successfully purged from GridVision.`);
+      setMessage(`Consumer ${consumerNumber} successfully purged from eMeter Seva.`);
       fetchConsumers();
       setConsumerData(null);
       setConsumerNumber('');
@@ -113,7 +113,7 @@ function AdminDashboard({ onLogout }) {
           <div className="bg-teal-500 p-2 rounded-xl text-white shadow-lg shadow-teal-500/30">
             <LayoutDashboard size={20} />
           </div>
-          <h2 className="text-white font-bold text-xl tracking-tight">GridVision</h2>
+          <h2 className="text-white font-bold text-xl tracking-tight">eMeter Seva</h2>
         </div>
 
         <nav className="flex-1 space-y-1">
@@ -151,7 +151,7 @@ function AdminDashboard({ onLogout }) {
         {/* Header with Quick Action Buttons */}
         <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
           <div>
-            <h1 className="text-3xl font-black text-slate-800 tracking-tight">GridVision Console</h1>
+            <h1 className="text-3xl font-black text-slate-800 tracking-tight">eMeter Seva Console</h1>
             <p className="text-sm text-slate-500 font-medium">Infrastructure Management & Billing Control</p>
           </div>
           
@@ -275,7 +275,7 @@ function AdminDashboard({ onLogout }) {
               <h3 className="text-xl font-black text-slate-800 mb-2">Confirm Termination</h3>
               <p className="text-sm text-slate-500 leading-relaxed mb-6">
                 Are you sure you want to delete <span className="font-bold text-slate-800">{consumerNumber}</span>? 
-                This action will permanently purge all consumption data from the <span className="font-bold">GridVision</span> database.
+                This action will permanently purge all consumption data from the <span className="font-bold">eMeter Seva</span> database.
               </p>
               
               <div className="flex gap-3">

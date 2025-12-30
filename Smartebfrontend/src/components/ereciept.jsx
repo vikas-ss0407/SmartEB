@@ -236,7 +236,7 @@ function EReceipt({ onLogout }) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(16);
       doc.setTextColor(0, 0, 0);
-      doc.text('GridVision Power Utility', pageWidth / 2, y + 10, { align: 'center' });
+      doc.text('eMeter Seva Power Utility', pageWidth / 2, y + 10, { align: 'center' });
       
       doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
@@ -400,14 +400,14 @@ function EReceipt({ onLogout }) {
       doc.text('This is a computer-generated receipt. Please retain for your records.', pageWidth / 2, y, { align: 'center' });
       
       y += 5;
-      doc.text('For support, contact: billing@gridvision.com', pageWidth / 2, y, { align: 'center' });
+      doc.text('For support, contact: billing@emeterseva.in', pageWidth / 2, y, { align: 'center' });
 
       // Page border
       doc.setDrawColor(0, 0, 0);
       doc.setLineWidth(0.5);
       doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
 
-      doc.save('GridVision_Receipt_' + data.consumerNumber + '.pdf');
+      doc.save('eMeterSeva_Receipt_' + data.consumerNumber + '.pdf');
     } catch (e) {
       console.error(e);
       alert('Unable to generate PDF. Please try again.');
@@ -458,7 +458,7 @@ function EReceipt({ onLogout }) {
               </svg>
             </div>
             <div>
-              <span className="text-lg font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">GridVision</span>
+              <span className="text-lg font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600">eMeter Seva</span>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-none">Enterprise Portal</p>
             </div>
           </div>
@@ -623,7 +623,7 @@ function EReceipt({ onLogout }) {
       <footer className="bg-white border-t border-slate-200 pt-16 pb-8">
         <div className="max-w-7xl mx-auto px-6">
           <div className="flex flex-col md:flex-row justify-between items-center gap-8 mb-12 opacity-50 grayscale">
-            <span className="text-xl font-black text-slate-400">GridVision™</span>
+            <span className="text-xl font-black text-slate-400">eMeter Seva™</span>
             <div className="flex gap-8 text-xs font-bold uppercase tracking-[0.2em] text-slate-500">
               <span>ISO 27001</span>
               <span>PCI Compliant</span>

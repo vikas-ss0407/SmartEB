@@ -47,7 +47,7 @@ function Dashboard({ onLogout }) {
             <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/20">
               <Zap className="text-white w-6 h-6" fill="white" />
             </div>
-            <h1 className="text-xl font-bold tracking-tight text-white italic">GridVision</h1>
+            <h1 className="text-xl font-bold tracking-tight text-white italic">eMeter Seva</h1>
           </div>
 
           <div className="flex items-center gap-4">

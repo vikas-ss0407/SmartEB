@@ -229,7 +229,7 @@ function ScanReadings({ onLogout }) {
             <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-200">
               <Zap className="text-white w-6 h-6" fill="currentColor" />
             </div>
-            <span className="text-2xl font-black tracking-tight text-slate-800">Grid<span className="text-indigo-600">Vision</span></span>
+            <span className="text-2xl font-black tracking-tight text-slate-800">eMeter<span className="text-indigo-600"> Seva</span></span>
           </div>
           
           <div className="flex items-center gap-4">
@@ -318,7 +318,7 @@ function ScanReadings({ onLogout }) {
             <div className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 h-full flex flex-col">
               <h2 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
                 <Camera className="text-indigo-600" size={20} />
-                GridVision AI Capture
+                eMeter Seva AI Capture
               </h2>
 
               {!isCameraOpen ? (
@@ -447,7 +447,7 @@ function ScanReadings({ onLogout }) {
         <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-2">
             <Zap size={14} className="text-indigo-600" />
-            <p className="text-slate-500 text-sm font-bold">© 2025 GridVision Intelligence Systems Inc.</p>
+            <p className="text-slate-500 text-sm font-bold">© 2025 eMeter Seva Services Pvt Ltd</p>
           </div>
           <div className="flex gap-8 text-xs font-black text-slate-400 uppercase tracking-widest">
             <a href="/privacy" className="hover:text-indigo-600 transition-colors">Privacy Architecture</a>

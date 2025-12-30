@@ -55,7 +55,7 @@ function Profile({ onLogout }) {
             className="flex items-center gap-4 cursor-pointer"
           >
             <div className="w-10 h-10 bg-teal-500 rounded-lg flex items-center justify-center">
-              <span className="text-black font-black">GV</span>
+              <span className="text-black font-black">ES</span>
             </div>
             <h1 className="text-xl font-black uppercase italic tracking-tight">
               System <span className="text-teal-500">Profile</span>
@@ -112,7 +112,7 @@ function Profile({ onLogout }) {
 
       {/* Footer */}
       <footer className="py-16 border-t border-white/5 text-center text-[10px] font-black uppercase tracking-[0.5em] text-slate-500">
-        GridVision Infrastructure © 2025
+        eMeter Seva Infrastructure © 2025
       </footer>
 
       <style dangerouslySetInnerHTML={{ __html: `

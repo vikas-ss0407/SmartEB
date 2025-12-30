@@ -42,153 +42,131 @@ function Login({ onLoginSuccess }) {
   };
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center overflow-hidden bg-[#02040a] font-sans selection:bg-teal-500/30">
+    <div className="relative min-h-screen w-full flex items-center justify-center p-4 overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       
-      {/* 1. INDUSTRIAL VIDEO BACKGROUND OVERLAY */}
+      {/* Animated Background Grid */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#02040a]/80 via-transparent to-[#02040a] z-10" />
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="w-full h-full object-cover opacity-30 filter grayscale"
-        >
-          {/* Replace this URL with a local industrial/tech video asset */}
-          <source src="https://assets.mixkit.co/videos/preview/mixkit-digital-animation-of-a-circuit-board-12711-large.mp4" type="video/mp4" />
-        </video>
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_80%_50%_at_50%_50%,#000_70%,transparent_110%)] opacity-20" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-teal-500/5 via-transparent to-indigo-500/5" />
       </div>
 
-      {/* 2. BACKGROUND SCANLINE EFFECT */}
-      <div className="absolute inset-0 pointer-events-none z-10 bg-[linear-gradient(rgba(18,16,16,0)_50%,rgba(0,0,0,0.25)_50%),linear-gradient(90deg,rgba(255,0,0,0.06),rgba(0,255,0,0.02),rgba(0,0,255,0.06))] bg-[length:100%_2px,3px_100%] opacity-20" />
+      {/* Corner Accents */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
+        <div className="absolute top-8 left-8 w-16 h-16 border-t-2 border-l-2 border-teal-500/30" />
+        <div className="absolute bottom-8 right-8 w-16 h-16 border-b-2 border-r-2 border-teal-500/30" />
+      </div>
 
-      {/* Back to Landing Button */}
+      {/* Back Button */}
       <button
-        onClick={() => {
-          navigate('/', { replace: true });
-          // Hard fallback if SPA history is empty or swipe back is blocked
-          setTimeout(() => {
-            if (window.location.pathname === '/login') {
-              window.location.href = '/';
-            }
-          }, 60);
-        }}
-        className="absolute top-6 left-6 z-30 flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 rounded-xl text-slate-400 hover:text-white transition-all text-sm font-bold"
+        onClick={() => navigate('/')}
+        className="absolute top-6 left-6 z-30 flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 backdrop-blur-sm border border-white/10 rounded-lg text-slate-300 hover:text-white transition-all text-sm font-semibold"
       >
         <ArrowLeft size={16} />
-        <span className="hidden sm:inline">Back to Home</span>
+        <span className="hidden sm:inline">Back</span>
       </button>
 
-      {/* 3. LOGIN INTERFACE */}
+      {/* Login Card */}
       <motion.div 
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-20 w-[90%] max-w-[450px]"
+        transition={{ duration: 0.4 }}
+        className="relative z-20 w-full max-w-md"
       >
-        {/* Terminal Header Decoration */}
-        <div className="flex items-center justify-between bg-white/5 backdrop-blur-md border-t border-x border-white/10 p-3 rounded-t-2xl">
-          <div className="flex gap-1.5">
-            <div className="w-2.5 h-2.5 rounded-full bg-red-500/50" />
-            <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50" />
-            <div className="w-2.5 h-2.5 rounded-full bg-teal-500/50" />
-          </div>
-          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40">Secure Node: 882-GV</span>
-        </div>
-
-        <div className="bg-black/60 backdrop-blur-2xl border border-white/10 p-8 md:p-12 shadow-2xl relative overflow-hidden rounded-b-2xl">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl overflow-hidden">
           
-          {/* Decorative Corner */}
-          <div className="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-teal-500/30 rounded-tr-xl" />
-          
-          <header className="mb-10 text-center">
-            <motion.div 
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              className="inline-block p-4 bg-teal-500/10 rounded-full mb-6 border border-teal-500/20"
-            >
-              <span className="text-3xl">🛡️</span>
-            </motion.div>
+          {/* Header */}
+          <div className="bg-gradient-to-r from-teal-600 to-indigo-600 px-8 py-8 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl mb-4">
+              <span className="text-white font-black text-2xl">ES</span>
+            </div>
             <h1 className="text-3xl font-black uppercase italic tracking-tighter text-white mb-2">
-              GRID<span className="text-teal-500">VISION</span>
+              eMeter<span className="text-teal-200"> Seva</span>
             </h1>
-            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.4em]">Biometric Auth Terminal</p>
-          </header>
+            <p className="text-teal-100/80 text-sm font-medium">Sign in to your account</p>
+          </div>
 
-          <form onSubmit={handleLogin} className="space-y-6">
-            {/* Email Field */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-teal-500 ml-1">Identity Vector (Email)</label>
-              <div className="relative group">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-400 transition-colors">👤</span>
+          {/* Form */}
+          <div className="p-8">
+            <form onSubmit={handleLogin} className="space-y-6">
+              {/* Email Field */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-300">
+                  Email Address
+                </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white outline-none focus:border-teal-500/50 focus:bg-teal-500/5 transition-all"
-                  placeholder="USER@GRIDVISION.IO"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all"
+                  placeholder="user@example.com"
                   required
                 />
               </div>
-            </div>
 
-            {/* Password Field */}
-            <div className="space-y-2">
-              <label className="text-[10px] font-black uppercase tracking-widest text-teal-500 ml-1">Access Protocol (Password)</label>
-              <div className="relative group">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-teal-400 transition-colors">🔑</span>
+              {/* Password Field */}
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-slate-300">
+                  Password
+                </label>
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl py-4 pl-12 pr-4 text-white outline-none focus:border-teal-500/50 focus:bg-teal-500/5 transition-all"
-                  placeholder="••••••••"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/20 outline-none transition-all"
+                  placeholder="Enter your password"
                   required
                 />
               </div>
-            </div>
 
-            {/* Action Buttons */}
-            <div className="grid grid-cols-2 gap-4 pt-4">
-              <button
-                type="button"
-                onClick={() => navigate('/signup')}
-                className="py-4 rounded-xl border border-white/10 text-[10px] font-black uppercase tracking-widest text-slate-400 hover:bg-white/5 hover:text-white transition-all"
-              >
-                Register
-              </button>
+              {/* Submit Button */}
               <button
                 type="submit"
                 disabled={isLoading}
-                className="relative overflow-hidden group py-4 rounded-xl bg-teal-500 text-black text-[10px] font-black uppercase tracking-widest transition-all hover:shadow-[0_0_30px_rgba(20,184,166,0.4)]"
+                className="w-full bg-gradient-to-r from-teal-600 to-indigo-600 hover:from-teal-500 hover:to-indigo-500 text-white font-bold text-sm py-4 px-6 rounded-lg transition-all shadow-lg shadow-teal-500/20 hover:shadow-teal-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
               >
-                <span className={isLoading ? 'opacity-0' : 'opacity-100'}>Initialize</span>
-                {isLoading && (
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                  </div>
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    Signing in...
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <span className="text-lg">→</span>
+                  </>
                 )}
               </button>
-            </div>
-          </form>
+            </form>
 
-          {/* System Footer Info */}
-          <div className="mt-10 pt-6 border-t border-white/5 flex justify-between items-center text-[8px] font-bold text-slate-600 uppercase tracking-widest">
-            <span>Server: ASIA-SOUTH-1</span>
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-              Online
-            </span>
+            {/* Sign Up Link */}
+            <div className="mt-6 pt-6 border-t border-white/10 text-center">
+              <p className="text-slate-400 text-sm">
+                Don't have an account?{' '}
+                <button 
+                  onClick={() => navigate('/signup')} 
+                  className="text-teal-400 hover:text-teal-300 font-semibold hover:underline transition-colors"
+                >
+                  Create Account
+                </button>
+              </p>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="bg-slate-900/50 px-8 py-4 border-t border-white/5 text-center">
+            <p className="text-slate-500 text-xs">© 2025 eMeter Seva Infrastructure</p>
           </div>
         </div>
-      </motion.div>
 
-      {/* 4. FLOATING LOGS (Industrial Aesthetic) */}
-      <div className="hidden lg:block absolute bottom-10 right-10 text-[10px] font-mono text-teal-500/30 text-right leading-tight select-none">
-        <p>SYSTEM_BOOT_SUCCESS</p>
-        <p>ENCRYPTION_LAYER_ACTIVE</p>
-        <p>WAITING_FOR_USER_ID...</p>
-      </div>
+        {/* Security Badge */}
+        <div className="mt-6 flex items-center justify-center gap-2 text-slate-500 text-xs">
+          <div className="w-2 h-2 rounded-full bg-teal-500 animate-pulse" />
+          <span>Secure Connection</span>
+        </div>
+      </motion.div>
     </div>
   );
 }

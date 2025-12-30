@@ -43,7 +43,7 @@ function Landing() {
         <div className="bg-black/40 backdrop-blur-2xl border border-white/10 rounded-3xl px-8 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
             <div className="bg-teal-500 p-2 rounded-xl group-hover:rotate-12 transition-transform shadow-[0_0_20px_rgba(20,184,166,0.5)]">⚡</div>
-            <span className="text-2xl font-black uppercase italic tracking-tighter">GridVision</span>
+            <span className="text-2xl font-black uppercase italic tracking-tighter">eMeter Seva</span>
           </div>
           <div className="hidden md:flex items-center gap-10 text-[11px] font-black uppercase tracking-[0.2em] text-slate-400">
             <button onClick={() => navigate('/about')} className="hover:text-teal-400 transition-colors">Platform</button>
@@ -66,7 +66,7 @@ function Landing() {
                 <span className="stroke-text">of Vision.</span>
               </h1>
               <p className="text-xl text-slate-400 max-w-xl leading-relaxed mb-10 border-l-4 border-teal-500 pl-6">
-                GridVision utilizes neural-mesh OCR to convert physical meter dials into verifiable digital data. Eliminate manual errors and automate your utility workflow instantly.
+                eMeter Seva utilizes neural-mesh OCR to convert physical meter dials into verifiable digital data. Eliminate manual errors and automate your utility workflow instantly.
               </p>
               <div className="flex gap-4">
                 <button onClick={() => navigate('/scanread')} className="px-10 py-5 bg-white text-black font-black rounded-2xl hover:bg-teal-500 transition-all uppercase tracking-widest text-sm">Launch Scanner</button>
@@ -167,7 +167,7 @@ function Landing() {
           </div>
           <div className="bg-gradient-to-br from-teal-500 to-blue-600 p-1 rounded-[3rem]">
             <div className="bg-[#02040a] rounded-[2.9rem] p-12">
-               <h3 className="text-3xl font-black uppercase italic mb-8 text-teal-400">The GridVision Advantage</h3>
+               <h3 className="text-3xl font-black uppercase italic mb-8 text-teal-400">The eMeter Seva Advantage</h3>
                <div className="space-y-8">
                   <div className="flex justify-between items-end">
                     <span className="text-xs font-black uppercase text-slate-400">Accuracy</span>
@@ -212,7 +212,7 @@ function Landing() {
       </section>
 
       <footer className="py-12 border-t border-white/5 text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-600">GridVision Infrastructure © 2025</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.5em] text-slate-600">eMeter Seva Infrastructure © 2025</p>
       </footer>
 
       <style dangerouslySetInnerHTML={{ __html: `
