@@ -31,7 +31,7 @@ function Dashboard({ onLogout }) {
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    const name = localStorage.getItem('userName') || 'User';
+    const name = sessionStorage.getItem('userName') || localStorage.getItem('userName') || 'User';
     setUserName(name);
   }, []);
 

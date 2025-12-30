@@ -20,28 +20,56 @@ function App() {
   const [isLoading, setIsLoading] = useState(true); // Track loading state
   const navigate = useNavigate();
 
-  // Check user in localStorage when app starts
+  // Check user in session storage when app starts
   useEffect(() => {
-    const name = localStorage.getItem('userName');
-    const role = localStorage.getItem('userRole');
-    const id = localStorage.getItem('userId');
-    if (name && role && id) {
-      setUser({ name, role, id });
-    } else {
-      setUser(null); // Ensure user is set to null if not logged in
+    // Clear old persisted auth data so a fresh session is required after browser restart
+    localStorage.removeItem('token');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('userId');
+
+    const token = sessionStorage.getItem('token');
+    const name = sessionStorage.getItem('userName');
+    const role = sessionStorage.getItem('userRole');
+    const id = sessionStorage.getItem('userId');
+
+    // Require a token and user info to treat the session as authenticated
+    if (!token || !name || !role || !id) {
+      sessionStorage.clear();
+      setUser(null);
+      setIsLoading(false);
+      return;
     }
-    setIsLoading(false); // After the check, set loading to false
+
+    try {
+      const [, payload] = token.split('.');
+      const decoded = JSON.parse(atob(payload));
+      const isExpired = decoded?.exp && decoded.exp * 1000 < Date.now();
+
+      if (isExpired) {
+        sessionStorage.clear();
+        setUser(null);
+      } else {
+        setUser({ name, role, id });
+      }
+    } catch (err) {
+      // Invalid token format, force logout state
+      sessionStorage.clear();
+      setUser(null);
+    } finally {
+      setIsLoading(false); // After the check, set loading to false
+    }
   }, []); // Empty dependency array to run only once
 
   const handleLoginSuccess = (userData) => {
     setUser(userData);
-    localStorage.setItem('userName', userData.name);
-    localStorage.setItem('userRole', userData.role);
-    localStorage.setItem('userId', userData.id);
+    sessionStorage.setItem('userName', userData.name);
+    sessionStorage.setItem('userRole', userData.role);
+    sessionStorage.setItem('userId', userData.id);
   };
 
   const handleLogout = () => {
-    localStorage.clear(); // Clear all user-related data
+    sessionStorage.clear(); // Clear session data
     setUser(null);
     navigate('/login'); // Redirect to login page
   };

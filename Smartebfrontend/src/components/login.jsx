@@ -18,11 +18,11 @@ function Login({ onLoginSuccess }) {
       const { user, token } = res.data;
       const role = user.role;
 
-      localStorage.setItem('userId', user.id);
-      localStorage.setItem('userName', user.name);
-      localStorage.setItem('userRole', role);
+      sessionStorage.setItem('userId', user.id);
+      sessionStorage.setItem('userName', user.name);
+      sessionStorage.setItem('userRole', role);
       if (token) {
-        localStorage.setItem('token', token);
+        sessionStorage.setItem('token', token);
       }
 
       onLoginSuccess({ name: user.name, role: role, id: user.id });

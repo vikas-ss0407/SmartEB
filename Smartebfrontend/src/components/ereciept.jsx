@@ -15,7 +15,7 @@ function EReceipt({ onLogout }) {
   const [currentDateTime, setCurrentDateTime] = useState(new Date());
 
   useEffect(() => {
-    const storedName = localStorage.getItem('userName') || 'Guest User';
+    const storedName = sessionStorage.getItem('userName') || localStorage.getItem('userName') || 'Guest User';
     setUserName(storedName);
   }, []);
 
@@ -164,6 +164,7 @@ function EReceipt({ onLogout }) {
     if (onLogout) {
       onLogout();
     } else {
+      sessionStorage.clear();
       localStorage.clear();
       navigate('/login');
     }

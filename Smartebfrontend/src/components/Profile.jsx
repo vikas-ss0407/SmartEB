@@ -14,7 +14,7 @@ function Profile({ onLogout }) {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const userId = sessionStorage.getItem('userId') || localStorage.getItem('userId');
     if (!userId) {
       navigate('/login');
       return;
@@ -23,6 +23,7 @@ function Profile({ onLogout }) {
     httpClient.get(`/auth/${userId}`)
       .then(res => setUser(res.data))
       .catch(() => {
+        sessionStorage.clear();
         localStorage.clear();
         navigate('/login');
       });
@@ -30,6 +31,7 @@ function Profile({ onLogout }) {
 
   const logout = () => {
     if (onLogout) onLogout();
+    sessionStorage.clear();
     localStorage.clear();
     navigate('/login');
   };
