@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useSpring, useTransform, AnimatePresence } from 'framer-motion';
-import manImage from '../assets/man.png';
-import quickPayImage from '../assets/Cash.png';
-import eReceiptImage from '../assets/MONEY.png';
+import rolebased from '../assets/rolebased.jpeg'
+import Aisystem from '../assets/Aisystem.jpeg'
+import eReceiptImage from '../assets/MONEY.png'
+import Scalable from '../assets/scalable.jpeg'
 
-// Premium Animation Presets
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
   whileInView: { opacity: 1, y: 0 },
@@ -59,7 +59,7 @@ function Landing() {
           <div className="lg:col-span-7">
             <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 1 }}>
               <span className="inline-block px-3 py-1 mb-6 text-[10px] font-black tracking-[0.4em] text-teal-400 uppercase bg-teal-400/10 border border-teal-400/20 rounded-md">
-                Industry Standard AI
+                Vision-Powered Intelligence
               </span>
               <h1 className="text-4xl sm:text-6xl md:text-8xl lg:text-[6rem] font-black leading-[0.9] md:leading-[0.85] tracking-tighter uppercase italic mb-6 sm:mb-8">
                 The Power <br />
@@ -79,10 +79,10 @@ function Landing() {
             <div className="absolute inset-0 bg-teal-500/20 blur-[100px] rounded-full animate-pulse" />
             <div className="relative grid grid-cols-2 gap-3 sm:gap-4">
               {[
-                { img: manImage, label: "Scan", color: "border-teal-500/30" },
-                { img: quickPayImage, label: "Verify", color: "border-blue-500/30" },
-                { img: eReceiptImage, label: "Vault", color: "border-emerald-500/30" },
-                { icon: "📡", label: "Sync", color: "border-purple-500/30" }
+                { img: rolebased, label: "Role Based Access", color: "border-teal-500/30" },
+                { img: Aisystem, label: "OCR Intelligence", color: "border-blue-500/30" },
+                { img: eReceiptImage, label: "Instant Payments", color: "border-emerald-500/30" },
+                { img: Scalable, label: "Auto Scalable", color: "border-purple-500/30" }
               ].map((item, i) => (
                 <motion.div 
                   key={i}
