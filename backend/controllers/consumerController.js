@@ -3,14 +3,30 @@ const axios = require('axios');
 const FormData = require('form-data');
 const fs = require('fs');
 
-// Utility to derive payment deadline: reading window ends on 15th, then 15 days to pay
-const computePaymentDeadline = (readingDate) => {
-  const d = new Date(readingDate);
-  const readingWindowEnd = new Date(d.getFullYear(), d.getMonth(), 15, 23, 59, 59);
-  const baseDate = d <= readingWindowEnd ? readingWindowEnd : d;
-  const deadline = new Date(baseDate);
-  deadline.setDate(deadline.getDate() + 15);
-  return deadline;
+// 60-day cycle: Day 1-15 reading, Day 16-30 payment, Day 31-60 idle, repeat
+const DAY_MS = 24 * 60 * 60 * 1000;
+const CYCLE_LENGTH_DAYS = 60;
+const CYCLE_REF_START = new Date(Date.UTC(2024, 0, 1)); // reference anchor
+
+const startOfDay = (dt) => {
+  const d = new Date(dt);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const getCycleWindows = (date) => {
+  const target = startOfDay(date);
+  const diffDays = Math.floor((target - CYCLE_REF_START) / DAY_MS);
+  const cycleIndex = Math.floor(diffDays / CYCLE_LENGTH_DAYS);
+  const cycleStart = new Date(CYCLE_REF_START.getTime() + cycleIndex * CYCLE_LENGTH_DAYS * DAY_MS);
+
+  const readingStart = cycleStart;
+  const readingEnd = new Date(cycleStart.getTime() + 14 * DAY_MS);
+  const paymentStart = new Date(cycleStart.getTime() + 15 * DAY_MS);
+  const paymentEnd = new Date(cycleStart.getTime() + 29 * DAY_MS);
+  const idleEnd = new Date(cycleStart.getTime() + 59 * DAY_MS);
+
+  return { cycleStart, readingStart, readingEnd, paymentStart, paymentEnd, idleEnd };
 };
 
 // Process meter image via AI service
@@ -230,14 +246,29 @@ exports.addReading = async (req, res) => {
     return res.status(400).json({ message: 'Invalid unitsConsumed' });
   }
 
-  const parsedDate = new Date(readingDate);
+  const parsedDate = readingDate ? new Date(readingDate) : new Date();
   if (isNaN(parsedDate)) {
     return res.status(400).json({ message: 'Invalid reading date' });
+  }
+
+  // Enforce reading window (day 1-15 of the active 60-day cycle)
+  const { readingStart, readingEnd, paymentEnd } = getCycleWindows(parsedDate);
+  const dayStart = startOfDay(parsedDate);
+  if (dayStart < readingStart || dayStart > readingEnd) {
+    return res.status(400).json({ message: 'Reading can only be logged during the 1-15 window of the active cycle.' });
   }
 
   try {
     const consumer = await Consumer.findOne({ consumerNumber });
     if (!consumer) return res.status(404).json({ message: 'Consumer not found' });
+
+    // Enforce single reading per 60-day cycle (day 1-15)
+    const { readingStart, readingEnd } = getCycleWindows(parsedDate);
+    const lastBillDate = consumer.lastBillDate ? startOfDay(consumer.lastBillDate) : null;
+    const hasReadingThisCycle = lastBillDate && lastBillDate >= readingStart && lastBillDate <= readingEnd;
+    if (hasReadingThisCycle) {
+      return res.status(400).json({ message: 'Reading already submitted for this cycle (days 1-15). Only one reading allowed per cycle.' });
+    }
 
     const previous = consumer.currentReading || 0;
     const newReading = Number.isFinite(currentReading) ? Number(currentReading) : previous + parsedUnits;
@@ -259,9 +290,9 @@ exports.addReading = async (req, res) => {
     consumer.currentReading = newReading;
     consumer.amount = computedUnits * rate;
 
-    // Set bill window: reading window ends 15th, +15 days to pay
+    // Set bill window per 60-day cycle: payment deadline = day 30 of the cycle
     consumer.lastBillDate = parsedDate;
-    consumer.nextPaymentDeadline = computePaymentDeadline(parsedDate);
+    consumer.nextPaymentDeadline = paymentEnd;
     consumer.paymentStatus = 'Pending';
 
     // Reset fines on new bill
@@ -444,8 +475,7 @@ exports.getBillSummary = async (req, res) => {
     if (!consumer) return res.status(404).json({ message: 'Consumer not found' });
 
     const now = new Date();
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-    const readingWindowEnd = new Date(now.getFullYear(), now.getMonth(), 15, 23, 59, 59);
+    const currentCycle = getCycleWindows(now);
 
     // Derive tariff rate and last units consumed for display
     const tariffRates = {
@@ -460,14 +490,19 @@ exports.getBillSummary = async (req, res) => {
 
     let billDeadline = consumer.nextPaymentDeadline ? new Date(consumer.nextPaymentDeadline) : null;
 
-    // Reading pending if current month window (1-15) hasn't been submitted after payment cleared
-    const readingPending = (!consumer.lastBillDate || consumer.lastBillDate < monthStart) && now <= readingWindowEnd && consumer.paymentStatus === 'Paid';
+    // Reading pending if we are in the reading window of the current 60-day cycle and no reading logged in this cycle
+    let readingPending = false;
+    if (now >= currentCycle.readingStart && now <= currentCycle.readingEnd) {
+      const lastBillDate = consumer.lastBillDate ? startOfDay(consumer.lastBillDate) : null;
+      const hasReadingThisCycle = lastBillDate && lastBillDate >= currentCycle.readingStart && lastBillDate <= currentCycle.readingEnd;
+      readingPending = !hasReadingThisCycle;
+    }
 
-    // If no deadline exists and the bill is still pending, align to reading window rule
-    if (!billDeadline && consumer.paymentStatus !== 'Paid') {
-      const baseDate = consumer.lastBillDate ? new Date(consumer.lastBillDate) : now;
-      billDeadline = computePaymentDeadline(baseDate);
-      consumer.nextPaymentDeadline = billDeadline;
+    // Derive cycle windows based on last bill (or current date if none)
+    if (consumer.lastBillDate) {
+      const { paymentEnd } = getCycleWindows(consumer.lastBillDate);
+      billDeadline = paymentEnd;
+      consumer.nextPaymentDeadline = paymentEnd;
       await consumer.save();
     }
 
@@ -513,24 +548,28 @@ exports.getBillSummary = async (req, res) => {
       totalBillAmount = consumer.amount + consumer.totalFineWithTax;
     }
 
-    // Determine reminder message
+    // Determine reminder message based on current phase
     let reminderMessage = '';
     let reminderType = 'none';
 
-    if (readingPending) {
-      const daysLeftForReading = Math.max(0, Math.ceil((readingWindowEnd - now) / (1000 * 60 * 60 * 24)));
+    const { readingStart, readingEnd, paymentStart, paymentEnd } = getCycleWindows(now);
+    const inReadingWindowNow = now >= readingStart && now <= readingEnd;
+    const inPaymentWindowNow = now >= paymentStart && now <= paymentEnd;
+
+    if (inReadingWindowNow && readingPending) {
+      const daysLeftForReading = Math.max(0, Math.ceil((readingEnd - now) / DAY_MS));
       reminderType = 'reading';
-      reminderMessage = `Reading required: submit meter reading by ${readingWindowEnd.toDateString()} (${daysLeftForReading} day(s) left).`;
+      reminderMessage = `Reading required: submit meter reading by ${readingEnd.toDateString()} (${daysLeftForReading} day(s) left).`;
     } else if (isOverdue) {
       reminderType = 'overdue';
       reminderMessage = `⚠️ OVERDUE: Your bill payment was due on ${billDeadline.toDateString()}. Please pay immediately to avoid further penalties.`;
-    } else if (daysUntilDeadline <= 3 && daysUntilDeadline > 0) {
+    } else if (inPaymentWindowNow && daysUntilDeadline <= 3 && daysUntilDeadline > 0) {
       reminderType = 'urgent';
       reminderMessage = `🔴 URGENT: Only ${daysUntilDeadline} day(s) left to pay your bill! Deadline: ${billDeadline.toDateString()}`;
-    } else if (daysUntilDeadline <= 7 && daysUntilDeadline > 3) {
+    } else if (inPaymentWindowNow && daysUntilDeadline <= 7 && daysUntilDeadline > 3) {
       reminderType = 'warning';
       reminderMessage = `🟡 REMINDER: Your bill is due in ${daysUntilDeadline} days. Deadline: ${billDeadline.toDateString()}`;
-    } else if (daysUntilDeadline > 7) {
+    } else if (inPaymentWindowNow && daysUntilDeadline > 7) {
       reminderType = 'notice';
       reminderMessage = `ℹ️ Upcoming Bill: Your next payment is due on ${billDeadline.toDateString()} (${daysUntilDeadline} days remaining)`;
     }
@@ -571,8 +610,8 @@ exports.getBillSummary = async (req, res) => {
 
       // Reading window info
       readingPending,
-      readingWindowStart: monthStart,
-      readingWindowEnd
+      readingWindowStart: currentCycle.readingStart,
+      readingWindowEnd: currentCycle.readingEnd
     });
   } catch (error) {
     console.error('Error fetching bill summary:', error);

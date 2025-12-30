@@ -158,6 +158,11 @@ function QuickPay({ onLogout }) {
                   <span className="text-3xl font-black text-slate-900 tracking-tighter">₹{amount || '0.00'}</span>
                 </div>
               </div>
+
+              <div className="flex justify-between items-center border-t border-slate-200 pt-4 text-sm">
+                <span className="text-slate-400 font-medium">Due Date</span>
+                <span className="text-slate-800 font-bold">{dueDate || 'N/A'}</span>
+              </div>
               
               {paymentStatus && (
                 <div className={`flex items-center justify-center gap-2 p-2 rounded-xl text-xs font-black uppercase tracking-widest ${
