@@ -89,39 +89,12 @@ function ScanReadings({ onLogout }) {
         const file = new File([blob], `meter-${Date.now()}.png`, { type: 'image/png' });
         setUploadedImage(file);
         stopCamera();
-        extractAIReading(file);
       },
       'image/png'
     );
   };
 
-  // AI extraction is optional; we keep this helper but no longer require it
-  const extractAIReading = async (file) => {
-    try {
-      const formData = new FormData();
-      formData.append('image', file);
-      formData.append('user_reading', '0');
 
-      const response = await fetch('http://localhost:8000/validate-meter', {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const meterReading = data.meter_reading ? String(data.meter_reading).trim() : '';
-        if (meterReading !== '') {
-          setAiExtractedReading(meterReading);
-        } else {
-          setAiExtractedReading('');
-        }
-      } else {
-        setAiExtractedReading('');
-      }
-    } catch (error) {
-      setAiExtractedReading('');
-    }
-  };
 
   const handleFileUpload = (e) => {
     const file = e.target.files?.[0];
@@ -135,7 +108,6 @@ function ScanReadings({ onLogout }) {
         return;
       }
       setUploadedImage(file);
-      extractAIReading(file);
     }
   };
 

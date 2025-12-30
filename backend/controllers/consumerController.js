@@ -54,7 +54,7 @@ exports.validateMeterImage = async (req, res) => {
     try {
       // Call AI service
       const aiResponse = await axios.post(
-        'http://localhost:8000/validate-meter',
+        'https://gridvision-ai-model.onrender.com/validate-meter',
         formData,
         {
           headers: formData.getHeaders(),
