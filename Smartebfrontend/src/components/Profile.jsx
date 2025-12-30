@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import httpClient from '../api/httpClient';
 import { motion } from 'framer-motion';
 
 const fadeInUp = {
@@ -20,7 +20,7 @@ function Profile({ onLogout }) {
       return;
     }
 
-    axios.get(`http://localhost:5000/api/auth/${userId}`)
+    httpClient.get(`/auth/${userId}`)
       .then(res => setUser(res.data))
       .catch(() => {
         localStorage.clear();

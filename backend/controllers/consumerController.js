@@ -251,10 +251,11 @@ exports.addReading = async (req, res) => {
     return res.status(400).json({ message: 'Invalid reading date' });
   }
 
-  // Enforce reading window (day 1-15 of the active 60-day cycle)
+  // Enforce reading window (day 1-15 of the active 60-day cycle) unless admin override
   const { readingStart, readingEnd, paymentEnd } = getCycleWindows(parsedDate);
   const dayStart = startOfDay(parsedDate);
-  if (dayStart < readingStart || dayStart > readingEnd) {
+  const isAdminOverride = req.user?.role === 'admin' && req.body?.adminOverride;
+  if (!isAdminOverride && (dayStart < readingStart || dayStart > readingEnd)) {
     return res.status(400).json({ message: 'Reading can only be logged during the 1-15 window of the active cycle.' });
   }
 
@@ -262,21 +263,32 @@ exports.addReading = async (req, res) => {
     const consumer = await Consumer.findOne({ consumerNumber });
     if (!consumer) return res.status(404).json({ message: 'Consumer not found' });
 
-    // Enforce single reading per 60-day cycle (day 1-15)
+    const isAdminOverride = req.user?.role === 'admin' && req.body?.adminOverride;
+
+    // Enforce single reading per 60-day cycle (day 1-15) unless admin override
     const { readingStart, readingEnd } = getCycleWindows(parsedDate);
     const lastBillDate = consumer.lastBillDate ? startOfDay(consumer.lastBillDate) : null;
     const hasReadingThisCycle = lastBillDate && lastBillDate >= readingStart && lastBillDate <= readingEnd;
-    if (hasReadingThisCycle) {
+    if (!isAdminOverride && hasReadingThisCycle) {
       return res.status(400).json({ message: 'Reading already submitted for this cycle (days 1-15). Only one reading allowed per cycle.' });
     }
 
     const previous = consumer.currentReading || 0;
     const newReading = Number.isFinite(currentReading) ? Number(currentReading) : previous + parsedUnits;
-    const computedUnits = newReading - previous;
 
-    if (newReading <= previous) {
+    // For admin override, trust supplied unitsConsumed if positive; otherwise fall back to diff (clamped at 0)
+    let computedUnits;
+    if (isAdminOverride && parsedUnits >= 0) {
+      computedUnits = parsedUnits;
+    } else {
+      computedUnits = newReading - previous;
+    }
+
+    if (!isAdminOverride && newReading <= previous) {
       return res.status(400).json({ message: `Current reading must be greater than previous reading (${previous}).` });
     }
+
+    if (computedUnits < 0) computedUnits = 0;
 
     const tariffRates = {
       domestic: 5,

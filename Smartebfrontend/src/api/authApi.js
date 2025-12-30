@@ -1,8 +1,8 @@
 // src/api/authApi.js
-import axios from 'axios';
+import httpClient from './httpClient';
 
-const API_URL = 'http://localhost:5000/api/auth';
+const API_URL = '/auth';
 
-export const signup = (data) => axios.post(`${API_URL}/signup`, data);
-export const login = (data) => axios.post(`${API_URL}/login`, data);
+export const signup = (data) => httpClient.post(`${API_URL}/signup`, data);
+export const login = (data) => httpClient.post(`${API_URL}/login`, data);
 

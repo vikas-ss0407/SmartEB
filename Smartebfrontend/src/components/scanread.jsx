@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import httpClient from '../api/httpClient';
 import { 
   Camera, 
   Upload, 
@@ -140,9 +141,7 @@ function ScanReadings({ onLogout }) {
 
   const fetchConsumerDetails = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/consumers/${consumerNo}`);
-      if (!response.ok) throw new Error('Consumer not found');
-      const data = await response.json();
+      const { data } = await httpClient.get(`/consumers/${consumerNo}`);
 
       const tariffRateMap = {
         Domestic: 5,
@@ -162,6 +161,12 @@ function ScanReadings({ onLogout }) {
       setTariff(tariffRateMap[data.tariffPlan] || 0);
     } catch (error) {
       console.error('Fetch error:', error);
+      if (error?.response?.status === 401) {
+        alert('Session expired. Please log in again.');
+        localStorage.clear();
+        navigate('/login');
+        return;
+      }
       alert('Consumer not found.');
     }
   };
@@ -209,30 +214,26 @@ function ScanReadings({ onLogout }) {
 
     setIsProcessing(true);
     try {
-      const response = await fetch(`http://localhost:5000/api/consumers/add-reading/${consumerNo}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          unitsConsumed,
-          currentReading: curr,
-          readingDate: new Date().toISOString(),
-          manualReading: manualReading || currentReading,
-        })
+      const { data } = await httpClient.put(`/consumers/add-reading/${consumerNo}`, {
+        unitsConsumed,
+        currentReading: curr,
+        readingDate: new Date().toISOString(),
+        manualReading: manualReading || currentReading,
       });
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err.message || 'Failed to submit reading');
-      }
-
-      const data = await response.json();
       setPreviousReading(curr);
       setAmount((data.amount || 0).toFixed(2));
       resetForm();
       alert(`✓ Reading submitted successfully! Units: ${unitsConsumed.toFixed(2)} | Amount: ₹${(data.amount || 0).toFixed(2)}`);
     } catch (error) {
-      console.error('Submit error:', error);
-      alert(error.message || 'Error submitting reading.');
+      console.error('Submit error:', error?.response?.data || error);
+      const message = error?.response?.data?.message || error?.message || 'Error submitting reading.';
+      if (error?.response?.status === 401) {
+        alert('Session expired. Please log in again.');
+        localStorage.clear();
+        navigate('/login');
+      } else {
+        alert(message);
+      }
     } finally {
       setIsProcessing(false);
     }

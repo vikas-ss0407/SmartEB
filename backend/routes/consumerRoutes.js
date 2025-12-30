@@ -3,6 +3,7 @@ const router = express.Router();
 const consumerController = require('../controllers/consumerController');
 const multer = require('multer');
 const path = require('path');
+const authMiddleware = require('../middleware/authMiddleware');
 
 // Configure multer for image uploads
 const storage = multer.diskStorage({
@@ -27,7 +28,10 @@ const upload = multer({
   }
 });
 
-// New bill summary and payment routes (specific routes before generic ones)
+// Protect all routes
+router.use(authMiddleware);
+
+// Bill summary and payment routes (specific routes before generic ones)
 router.get('/fines/all', consumerController.getConsumersWithFines);
 router.get('/bill-summary/:consumerNumber', consumerController.getBillSummary);
 router.post('/mark-paid/:consumerNumber', consumerController.markPaymentAsPaid);

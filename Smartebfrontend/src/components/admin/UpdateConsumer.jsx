@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import httpClient from '../../api/httpClient';
 import { useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -34,7 +34,7 @@ function UpdateConsumer() {
     setStatus({ type: '', msg: '' });
     
     try {
-      const response = await axios.get(`http://localhost:5000/api/consumers/${consumerNumber}`);
+      const response = await httpClient.get(`/consumers/${consumerNumber}`);
       setConsumerData(response.data);
     } catch (error) {
       console.error('Error fetching consumer:', error);
@@ -49,7 +49,7 @@ function UpdateConsumer() {
     e.preventDefault();
     setIsUpdating(true);
     try {
-      await axios.put(`http://localhost:5000/api/consumers/${consumerNumber}`, consumerData);
+      await httpClient.put(`/consumers/${consumerNumber}`, consumerData);
       setStatus({ type: 'success', msg: 'Telemetry profile updated successfully!' });
     } catch (error) {
       console.error('Error updating consumer:', error);

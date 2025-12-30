@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import httpClient from '../api/httpClient';
 import { markPaymentAsPaid } from '../api/consumerApi';
 import NotificationWidget from './Notifications';
 import { 
@@ -45,10 +46,13 @@ function QuickPay({ onLogout }) {
   };
 
   const fetchConsumerDetails = async () => {
+    const id = consumerNo.trim();
+    if (id.length < 6) {
+      setAlreadyPaid(false);
+      return;
+    }
     try {
-      const response = await fetch(`http://localhost:5000/api/consumers/bill-summary/${consumerNo}`);
-      if (!response.ok) throw new Error('Consumer not found');
-      const data = await response.json();
+      const { data } = await httpClient.get(`/consumers/bill-summary/${id}`);
       setConsumerName(data.name);
       setPaymentStatus(data.paymentStatus);
       
@@ -61,7 +65,13 @@ function QuickPay({ onLogout }) {
       }
       setDueDate(data.nextPaymentDeadline ? new Date(data.nextPaymentDeadline).toLocaleDateString() : "N/A");
     } catch (error) {
-      alert('Consumer not found.');
+      if (error?.response?.status === 401) {
+        alert('Session expired. Please log in again.');
+        localStorage.clear();
+        navigate('/login');
+      } else {
+        alert('Consumer not found.');
+      }
       setAlreadyPaid(false);
     }
   };

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import httpClient from '../../api/httpClient';
 import { 
   ArrowLeft, 
   UserPlus, 
@@ -38,7 +38,7 @@ function AddConsumer() {
     setIsSubmitting(true);
 
     try {
-      await axios.post('http://localhost:5000/api/consumers', consumer);
+      await httpClient.post('/consumers', consumer);
       setStatus({ type: 'success', msg: 'New consumer account provisioned successfully!' });
       // Reset form
       setConsumer({

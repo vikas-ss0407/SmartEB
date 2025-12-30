@@ -15,12 +15,15 @@ function Login({ onLoginSuccess }) {
     setIsLoading(true);
     try {
       const res = await login({ email, password });
-      const user = res.data.user;
+      const { user, token } = res.data;
       const role = user.role;
 
       localStorage.setItem('userId', user.id);
       localStorage.setItem('userName', user.name);
       localStorage.setItem('userRole', role);
+      if (token) {
+        localStorage.setItem('token', token);
+      }
 
       onLoginSuccess({ name: user.name, role: role, id: user.id });
 

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { getBillSummary } from '../../api/consumerApi';
+import { addReading as addReadingApi, getBillSummary } from '../../api/consumerApi';
 import { 
   ArrowLeft, 
   Gauge, 
@@ -31,9 +30,15 @@ function AddReading() {
 
   // Fetch existing consumer reading and tariff when consumer id entered
   useEffect(() => {
-    const loadConsumer = async () => {
-      const id = reading.consumerNumber.trim();
-      if (!id) return;
+    const id = reading.consumerNumber.trim();
+    if (id.length < 10) {
+      setPrevReading(null);
+      setTariffRate(null);
+      setStatus({ type: '', msg: '' });
+      return;
+    }
+
+    const handle = setTimeout(async () => {
       try {
         const data = await getBillSummary(id);
         setPrevReading(Number(data.currentReading || 0));
@@ -42,10 +47,12 @@ function AddReading() {
       } catch (err) {
         setPrevReading(null);
         setTariffRate(null);
-        setStatus({ type: 'error', msg: 'Consumer not found. Please verify the ID.' });
+        const errMsg = err?.response?.data?.message || 'Consumer not found. Please verify the ID.';
+        setStatus({ type: 'error', msg: errMsg });
       }
-    };
-    loadConsumer();
+    }, 300);
+
+    return () => clearTimeout(handle);
   }, [reading.consumerNumber]);
 
   // Compute units and amount as user types current reading
@@ -85,34 +92,23 @@ function AddReading() {
       return;
     }
 
-    if (currentVal <= prevReading) {
-      setStatus({ type: 'error', msg: `Current reading must be greater than previous reading (${prevReading}).` });
-      return;
-    }
-
     const unitsToRecord = currentVal - prevReading;
-
-    if (unitsToRecord <= 0) {
-      setStatus({ type: 'error', msg: 'Units consumed must be greater than 0.' });
-      return;
-    }
 
     setIsSubmitting(true);
     try {
-      await axios.put(
-        `http://localhost:5000/api/consumers/add-reading/${reading.consumerNumber}`, 
-        {
-          unitsConsumed: unitsToRecord,
-          currentReading: currentVal,
-          readingDate: new Date().toISOString(),
-        }
-      );
+      await addReadingApi(reading.consumerNumber, {
+        unitsConsumed: unitsToRecord,
+        currentReading: currentVal,
+        readingDate: new Date().toISOString(),
+        adminOverride: true,
+      });
       setStatus({ type: 'success', msg: `Reading for ${reading.consumerNumber} recorded successfully!` });
       setReading(prev => ({ ...prev, meterReading: '' }));
       setUnitsComputed(null);
       setAmountComputed(null);
     } catch (err) {
-      setStatus({ type: 'error', msg: 'Failed to update reading. Verify Consumer ID.' });
+      const errMsg = err?.response?.data?.message || 'Failed to update reading. Verify Consumer ID.';
+      setStatus({ type: 'error', msg: errMsg });
     } finally {
       setIsSubmitting(false);
     }
@@ -191,7 +187,7 @@ function AddReading() {
               {/* Reading Value (Right on desktop) */}
               <div className="space-y-2 md:order-2 order-1">
                 <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Current kWh</label>
-                <div className={`relative rounded-2xl border-2 ${unitsComputed !== null && unitsComputed <= 0 ? 'border-rose-200 bg-rose-50/60' : 'border-transparent bg-slate-50'} focus-within:border-teal-500/20 focus-within:bg-white transition-all`}>
+                <div className="relative rounded-2xl border-2 border-transparent bg-slate-50 focus-within:border-teal-500/20 focus-within:bg-white transition-all">
                   <Gauge className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
                   <input
                     type="number"
@@ -203,9 +199,6 @@ function AddReading() {
                     className="w-full pl-12 pr-4 py-4 rounded-2xl bg-transparent text-slate-800 font-bold outline-none"
                   />
                 </div>
-                {unitsComputed !== null && unitsComputed <= 0 && (
-                  <p className="text-xs font-semibold text-rose-600">Reading must be greater than previous reading.</p>
-                )}
               </div>
             </div>
 

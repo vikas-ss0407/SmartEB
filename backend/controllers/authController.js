@@ -1,4 +1,5 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 // SIGNUP CONTROLLER
@@ -49,9 +50,22 @@ exports.login = async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ message: 'Invalid email or password' });
 
-    // Return user role and basic info
+    const secret = process.env.JWT_SECRET;
+    const expiresIn = process.env.JWT_EXPIRES_IN || '1d';
+    if (!secret) {
+      return res.status(500).json({ message: 'Server misconfigured: missing JWT secret' });
+    }
+
+    const token = jwt.sign(
+      { sub: user._id, role: user.role, email: user.email },
+      secret,
+      { expiresIn }
+    );
+
+    // Return user role, token, and basic info
     res.status(200).json({
       message: 'Login successful',
+      token,
       user: {
         id: user._id,
         name: user.name,

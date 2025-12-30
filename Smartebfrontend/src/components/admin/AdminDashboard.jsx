@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import httpClient from '../../api/httpClient';
 import { getConsumersWithFines } from '../../api/consumerApi';
 import { 
   Users, 
@@ -38,7 +38,7 @@ function AdminDashboard({ onLogout }) {
 
   const fetchConsumers = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/consumers');
+      const response = await httpClient.get('/consumers');
       if (Array.isArray(response.data)) {
         setConsumers(response.data);
       }
@@ -66,7 +66,7 @@ function AdminDashboard({ onLogout }) {
     setLoading(true);
     setErrorMessage('');
     try {
-      const res = await axios.get(`http://localhost:5000/api/consumers/${consumerNumber}`);
+      const res = await httpClient.get(`/consumers/${consumerNumber}`);
       if (res.data) {
         setConsumerData(res.data);
       } else {
@@ -92,7 +92,7 @@ function AdminDashboard({ onLogout }) {
   const confirmDeleteConsumer = async () => {
     setErrorMessage('');
     try {
-      await axios.delete(`http://localhost:5000/api/consumers/${consumerNumber}`);
+      await httpClient.delete(`/consumers/${consumerNumber}`);
       setMessage(`Consumer ${consumerNumber} successfully purged from GridVision.`);
       fetchConsumers();
       setConsumerData(null);

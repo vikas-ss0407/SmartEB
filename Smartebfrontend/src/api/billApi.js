@@ -1,6 +1,6 @@
-import axios from 'axios';
+import httpClient from './httpClient';
 
-const API_URL = 'http://localhost:5000/api/bills';
+const API_URL = '/bills';
 
 /**
  * Calculate bill details including fines and reminders
@@ -10,7 +10,7 @@ const API_URL = 'http://localhost:5000/api/bills';
  */
 export const calculateBillDetails = async (billAmount, deadlineDate) => {
   try {
-    const response = await axios.post(`${API_URL}/calculate`, {
+    const response = await httpClient.post(`${API_URL}/calculate`, {
       billAmount,
       deadlineDate
     });
