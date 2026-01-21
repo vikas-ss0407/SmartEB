@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { addReading as addReadingApi, getBillSummary } from '../../api/consumerApi';
 import { 
   ArrowLeft, 
@@ -11,6 +11,7 @@ import {
 
 function AddReading() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [reading, setReading] = useState({
     consumerNumber: '',
     meterReading: '',
@@ -27,6 +28,17 @@ function AddReading() {
   const handleChange = (e) => {
     setReading({ ...reading, [e.target.name]: e.target.value });
   };
+
+  // Prefill consumer number from navigation state or query param
+  useEffect(() => {
+    const stateConsumer = location.state?.consumerNumber;
+    const params = new URLSearchParams(window.location.search);
+    const queryConsumer = params.get('consumer');
+    const initial = stateConsumer || queryConsumer;
+    if (initial) {
+      setReading(prev => ({ ...prev, consumerNumber: initial }));
+    }
+  }, [location.state]);
 
   // Fetch existing consumer reading and tariff when consumer id entered
   useEffect(() => {
@@ -106,6 +118,10 @@ function AddReading() {
       setReading(prev => ({ ...prev, meterReading: '' }));
       setUnitsComputed(null);
       setAmountComputed(null);
+      // Navigate back to dashboard's Missed tab and refresh
+      setTimeout(() => {
+        navigate('/admin-dashboard', { state: { tab: 'missed' } });
+      }, 800);
     } catch (err) {
       const errMsg = err?.response?.data?.message || 'Failed to update reading. Verify Consumer ID.';
       setStatus({ type: 'error', msg: errMsg });

@@ -88,18 +88,54 @@ function ScanReadings({ onLogout }) {
     context.drawImage(videoRef.current, 0, 0, canvasRef.current.width, canvasRef.current.height);
     
     canvasRef.current.toBlob(
-      (blob) => {
+      async (blob) => {
         const file = new File([blob], `meter-${Date.now()}.png`, { type: 'image/png' });
         setUploadedImage(file);
         stopCamera();
+        await validateImageWithAI(file);
       },
       'image/png'
     );
   };
 
+  const validateImageWithAI = async (imageFile) => {
+    if (!imageFile) return;
+
+    setIsProcessing(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', imageFile);
+      formData.append('user_reading', '0'); // Dummy value for validation
+      formData.append('consumerNumber', consumerNo);
+
+      const response = await httpClient.post('/consumers/validate-meter-image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.data.status === 'VALID' && response.data.meter_reading) {
+        const extractedReading = response.data.meter_reading;
+        setAiExtractedReading(extractedReading);
+        alert(`✓ AI Detection: ${extractedReading} kWh\nPlease verify and enter the reading manually below.`);
+      } else if (response.data.status === 'OCR_FAILED') {
+        setAiExtractedReading('OCR Failed');
+        alert('⚠️ Could not extract reading from image. Please enter manually.');
+      } else {
+        setAiExtractedReading('Invalid');
+        alert(response.data.reason || 'Image validation failed. Please retake the photo.');
+      }
+    } catch (error) {
+      console.error('AI validation error:', error);
+      setAiExtractedReading('Error');
+      const message = error?.response?.data?.reason || error?.response?.data?.message || 'AI validation failed. Please enter reading manually.';
+      alert(`⚠️ ${message}`);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
 
 
-  const handleFileUpload = (e) => {
+
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (file) {
       if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
@@ -111,6 +147,7 @@ function ScanReadings({ onLogout }) {
         return;
       }
       setUploadedImage(file);
+      await validateImageWithAI(file);
     }
   };
 
@@ -173,15 +210,17 @@ function ScanReadings({ onLogout }) {
   };
 
   const handleSubmitReading = async () => {
-    const prev = parseFloat(previousReading) || 0;
-    const curr = parseFloat(currentReading);
-
-    if (Number.isNaN(curr)) {
-      alert('Please enter a valid current reading.');
+    // Use manual reading entered by user (not AI extracted)
+    const manualValue = parseFloat(manualReading);
+    
+    if (Number.isNaN(manualValue) || !manualReading) {
+      alert('Please enter the meter reading manually in the "Human Validation" field.');
       return;
     }
 
-    const unitsConsumed = curr - prev;
+    const prev = parseFloat(previousReading) || 0;
+    const unitsConsumed = manualValue - prev;
+    
     if (unitsConsumed <= 0) {
       alert('Current reading must be greater than previous reading.');
       return;
@@ -191,11 +230,11 @@ function ScanReadings({ onLogout }) {
     try {
       const { data } = await httpClient.put(`/consumers/add-reading/${consumerNo}`, {
         unitsConsumed,
-        currentReading: curr,
+        currentReading: manualValue,
         readingDate: new Date().toISOString(),
-        manualReading: manualReading || currentReading,
+        manualReading: manualValue,
       });
-      setPreviousReading(curr);
+      setPreviousReading(manualValue);
       setAmount((data.amount || 0).toFixed(2));
       resetForm();
       alert(`✓ Reading submitted successfully! Units: ${unitsConsumed.toFixed(2)} | Amount: ₹${(data.amount || 0).toFixed(2)}`);
@@ -339,7 +378,7 @@ function ScanReadings({ onLogout }) {
                           <CheckCircle className="text-green-600 w-12 h-12" />
                         </div>
                         <p className="text-slate-800 font-black text-xl mb-1">Image Loaded</p>
-                        <p className="text-slate-500 text-sm font-medium">{uploadedImage.name}</p>
+                        <p className="text-slate-500 text-sm font-medium">{uploadedImage.name}setManualReading(''); setCurrentReading(''); </p>
                         <button 
                           onClick={() => { setUploadedImage(null); setAiExtractedReading(''); }}
                           className="mt-6 text-indigo-600 font-bold text-sm flex items-center gap-2 mx-auto hover:underline"

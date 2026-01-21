@@ -76,3 +76,8 @@ export const getConsumersWithFines = async () => {
   const response = await httpClient.get(`${API_URL}/fines/all`);
   return response.data;
 };
+
+export const getConsumersWithMissedReadings = async () => {
+  const response = await httpClient.get(`${API_URL}/readings/missed`);
+  return response.data;
+};

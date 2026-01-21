@@ -7,13 +7,15 @@ import {
   LayoutDashboard, 
   Info, 
   Zap, 
-  ArrowRight
+  ArrowRight,
+  Calendar
 } from 'lucide-react';
-
-import manImage from '../assets/man.png';
-import quickPayImage from '../assets/Cash.png';
-import eReceiptImage from '../assets/MONEY.png';
 import NotificationWidget from './Notifications';
+
+// Images served from public/images
+const manImage = '/images/man.png';
+const quickPayImage = '/images/cash.png';
+const eReceiptImage = '/images/money.png';
 
 // Animation Config
 const cardIn = {
@@ -28,10 +30,57 @@ const cardIn = {
 function Dashboard({ onLogout }) {
   const navigate = useNavigate();
   const [userName, setUserName] = useState('');
+  const [readingCycle, setReadingCycle] = useState(null);
+  const [billingCycle, setBillingCycle] = useState(null);
+
+  // Calculate cycle windows (same logic as backend)
+  const getCycleWindows = (date) => {
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const CYCLE_LENGTH_DAYS = 60;
+    const CYCLE_REF_START = new Date(Date.UTC(2024, 0, 1)); // Jan 1, 2024
+    
+    const startOfDay = (dt) => {
+      const d = new Date(dt);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    };
+
+    const target = startOfDay(date);
+    const diffDays = Math.floor((target - CYCLE_REF_START) / DAY_MS);
+    const cycleIndex = Math.floor(diffDays / CYCLE_LENGTH_DAYS);
+    const cycleStart = new Date(CYCLE_REF_START.getTime() + cycleIndex * CYCLE_LENGTH_DAYS * DAY_MS);
+
+    const readingStart = cycleStart;
+    const readingEnd = new Date(cycleStart.getTime() + 14 * DAY_MS);
+    const paymentStart = new Date(cycleStart.getTime() + 15 * DAY_MS);
+    const paymentEnd = new Date(cycleStart.getTime() + 29 * DAY_MS);
+
+    return { readingStart, readingEnd, paymentStart, paymentEnd };
+  };
 
   useEffect(() => {
     const name = sessionStorage.getItem('userName') || localStorage.getItem('userName') || 'User';
     setUserName(name);
+
+    // Calculate current cycle windows
+    const now = new Date();
+    const windows = getCycleWindows(now);
+    
+    // Determine if we're in reading window or payment window
+    const inReadingWindow = now >= windows.readingStart && now <= windows.readingEnd;
+    const inPaymentWindow = now >= windows.paymentStart && now <= windows.paymentEnd;
+
+    setReadingCycle({
+      start: windows.readingStart,
+      end: windows.readingEnd,
+      isActive: inReadingWindow
+    });
+
+    setBillingCycle({
+      start: windows.paymentStart,
+      end: windows.paymentEnd,
+      isActive: inPaymentWindow
+    });
   }, []);
 
   return (
@@ -72,7 +121,7 @@ function Dashboard({ onLogout }) {
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-12"
+          className="mb-8"
         >
           <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-2 tracking-tight">
             Hello, {userName.split(' ')[0]}!
@@ -107,6 +156,98 @@ function Dashboard({ onLogout }) {
             image={eReceiptImage}
             onClick={() => navigate('/ereciept')}
           />
+        </div>
+
+        {/* Cycle Information Banners - Bottom */}
+        <div className="mt-12 space-y-4">
+          {/* Reading Cycle Alert */}
+          {readingCycle && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className={`bg-gradient-to-br backdrop-blur-md rounded-3xl p-6 shadow-lg ${
+                readingCycle.isActive 
+                  ? 'from-cyan-500/10 via-blue-500/5 to-purple-500/10 border border-cyan-500/20' 
+                  : 'from-slate-500/5 via-slate-500/3 to-slate-500/5 border border-slate-500/10'
+              }`}
+            >
+              <div className="flex items-start gap-4">
+                <div className={`p-3 rounded-2xl ${readingCycle.isActive ? 'bg-cyan-500/20' : 'bg-slate-500/10'}`}>
+                  <Calendar className={`w-6 h-6 ${readingCycle.isActive ? 'text-cyan-400' : 'text-slate-400'}`} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-white font-bold text-lg mb-1">
+                    {readingCycle.isActive ? '📊 Reading Window Active' : '📅 Reading Cycle'}
+                  </h3>
+                  <p className="text-slate-300 text-sm mb-3">
+                    {readingCycle.isActive ? 'Submit your meter reading now!' : 'Next reading window:'}
+                  </p>
+                  <div className="flex flex-wrap gap-4 items-center">
+                    <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Start</p>
+                      <p className="text-white font-semibold">{readingCycle.start.toDateString()}</p>
+                    </div>
+                    <div className={readingCycle.isActive ? 'text-cyan-400' : 'text-slate-500'}>→</div>
+                    <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">End</p>
+                      <p className="text-white font-semibold">{readingCycle.end.toDateString()}</p>
+                    </div>
+                  </div>
+                  {readingCycle.isActive && (
+                    <div className="mt-3 flex items-center gap-2 text-amber-400 text-sm font-semibold">
+                      <span className="w-2 h-2 bg-amber-400 rounded-full animate-pulse"></span>
+                      Action Required: Submit reading before {readingCycle.end.toDateString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Billing Cycle Alert */}
+          {billingCycle && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className={`bg-gradient-to-br backdrop-blur-md rounded-3xl p-6 shadow-lg ${
+                billingCycle.isActive 
+                  ? 'from-emerald-500/10 via-green-500/5 to-teal-500/10 border border-emerald-500/20' 
+                  : 'from-slate-500/5 via-slate-500/3 to-slate-500/5 border border-slate-500/10'
+              }`}
+            >
+              <div className="flex items-start gap-4">
+                <div className={`p-3 rounded-2xl ${billingCycle.isActive ? 'bg-emerald-500/20' : 'bg-slate-500/10'}`}>
+                  <Calendar className={`w-6 h-6 ${billingCycle.isActive ? 'text-emerald-400' : 'text-slate-400'}`} />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-white font-bold text-lg mb-1">
+                    {billingCycle.isActive ? '💳 Payment Window Active' : '📋 Billing Cycle'}
+                  </h3>
+                  <p className="text-slate-300 text-sm mb-3">
+                    {billingCycle.isActive ? 'Pay your bill now to avoid penalties!' : 'Next payment window:'}
+                  </p>
+                  <div className="flex flex-wrap gap-4 items-center">
+                    <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Start</p>
+                      <p className="text-white font-semibold">{billingCycle.start.toDateString()}</p>
+                    </div>
+                    <div className={billingCycle.isActive ? 'text-emerald-400' : 'text-slate-500'}>→</div>
+                    <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                      <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Deadline</p>
+                      <p className="text-white font-semibold">{billingCycle.end.toDateString()}</p>
+                    </div>
+                  </div>
+                  {billingCycle.isActive && (
+                    <div className="mt-3 flex items-center gap-2 text-emerald-400 text-sm font-semibold">
+                      <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+                      Payment due by {billingCycle.end.toDateString()}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          )}
         </div>
       </main>
 

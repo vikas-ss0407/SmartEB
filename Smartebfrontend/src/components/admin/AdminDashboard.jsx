@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import httpClient from '../../api/httpClient';
-import { getConsumersWithFines } from '../../api/consumerApi';
+import { getConsumersWithFines, getConsumersWithMissedReadings } from '../../api/consumerApi';
 import { 
   Users, 
   UserPlus, 
@@ -20,6 +20,7 @@ import {
 
 function AdminDashboard({ onLogout }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const [consumers, setConsumers] = useState([]);
   const [consumersWithFines, setConsumersWithFines] = useState([]);
   const [consumerNumber, setConsumerNumber] = useState('');
@@ -28,12 +29,19 @@ function AdminDashboard({ onLogout }) {
   const [message, setMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [showFinesTab, setShowFinesTab] = useState(false);
+  const [showMissedTab, setShowMissedTab] = useState(false);
+  const [missedReadings, setMissedReadings] = useState([]);
   
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     document.title = "eMeter Seva | Admin Dashboard";
     fetchConsumers();
+    // If navigated back with a state to focus on missed tab, activate it
+    if (location.state?.tab === 'missed') {
+      setShowMissedTab(true);
+      setShowFinesTab(false);
+    }
   }, []);
 
   const fetchConsumers = async () => {
@@ -60,6 +68,20 @@ function AdminDashboard({ onLogout }) {
     };
     fetchFines();
   }, [showFinesTab]);
+
+  useEffect(() => {
+    const fetchMissed = async () => {
+      if (showMissedTab) {
+        try {
+          const data = await getConsumersWithMissedReadings();
+          setMissedReadings(data);
+        } catch (error) {
+          console.error('Error fetching missed readings:', error);
+        }
+      }
+    };
+    fetchMissed();
+  }, [showMissedTab]);
 
   const handleSearchConsumer = async () => {
     if (!consumerNumber) return;
@@ -133,10 +155,17 @@ function AdminDashboard({ onLogout }) {
           </button>
 
           <button 
-            onClick={() => setShowFinesTab(true)}
+            onClick={() => { setShowFinesTab(true); setShowMissedTab(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${showFinesTab ? 'bg-rose-600 text-white shadow-lg shadow-rose-600/20' : 'hover:bg-slate-800'}`}
           >
             <AlertTriangle size={18} /> <span className="text-sm font-semibold">Penalties</span>
+          </button>
+
+          <button 
+            onClick={() => { setShowMissedTab(true); setShowFinesTab(false); }}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${showMissedTab ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20' : 'hover:bg-slate-800'}`}
+          >
+            <AlertTriangle size={18} /> <span className="text-sm font-semibold">Missed Readings</span>
           </button>
         </nav>
 
@@ -199,7 +228,7 @@ function AdminDashboard({ onLogout }) {
 
             {/* Content Pane */}
             <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden min-h-[400px]">
-              {!showFinesTab ? (
+              {!showFinesTab && !showMissedTab ? (
                 <div className="p-8">
                   {consumerData ? (
                     <div className="animate-in fade-in zoom-in-95 duration-300">
@@ -229,8 +258,10 @@ function AdminDashboard({ onLogout }) {
                     </div>
                   )}
                 </div>
-              ) : (
+              ) : showFinesTab ? (
                 <FineTable data={consumersWithFines} />
+              ) : (
+                <MissedTable data={missedReadings} />
               )}
             </div>
           </div>
@@ -338,6 +369,52 @@ const FineTable = ({ data }) => (
       </table>
     ) : (
       <div className="p-20 text-center text-slate-400 font-medium italic">No active penalties detected.</div>
+    )}
+  </div>
+);
+
+const MissedTable = ({ data }) => (
+  <div className="overflow-x-auto">
+    <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-amber-50/40">
+      <h3 className="font-bold text-slate-800">Missed Meter Readings</h3>
+      <span className="bg-amber-500 text-white text-[10px] px-3 py-1 rounded-full font-black uppercase tracking-tighter">Attention</span>
+    </div>
+    {data.length > 0 ? (
+      <table className="w-full text-left">
+        <thead>
+          <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase font-black tracking-widest border-b border-slate-100">
+            <th className="px-6 py-4">Account</th>
+            <th className="px-6 py-4">Tariff</th>
+            <th className="px-6 py-4">Last Bill Date</th>
+            <th className="px-6 py-4">Reading Window</th>
+            <th className="px-6 py-4">Status</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-slate-50">
+          {data.map((c) => (
+            <tr key={c.consumerNumber} className="hover:bg-slate-50/80 transition-all">
+              <td className="px-6 py-4">
+                <p className="font-bold text-slate-800 text-sm">{c.name}</p>
+                <p className="text-[10px] text-slate-400 font-mono">{c.consumerNumber}</p>
+              </td>
+              <td className="px-6 py-4 text-sm font-medium">{c.tariffPlan}</td>
+              <td className="px-6 py-4 text-sm font-medium">{c.lastBillDate ? new Date(c.lastBillDate).toDateString() : '—'}</td>
+              <td className="px-6 py-4 text-sm font-medium">{new Date(c.readingWindowStart).toDateString()} → {new Date(c.readingWindowEnd).toDateString()}</td>
+              <td className="px-6 py-4">
+                <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-3 py-1 rounded-lg uppercase">Missed</span>
+                <button
+                  onClick={() => window.location.href = `/add-reading?consumer=${encodeURIComponent(c.consumerNumber)}`}
+                  className="ml-3 text-xs font-bold bg-slate-900 text-white px-3 py-1.5 rounded-lg hover:bg-slate-800"
+                >
+                  Reviewed
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    ) : (
+      <div className="p-20 text-center text-slate-400 font-medium italic">No missed readings detected.</div>
     )}
   </div>
 );

@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useScroll, useSpring, useTransform, AnimatePresence } from 'framer-motion';
-import rolebased from '../assets/rolebased.jpeg'
-import Aisystem from '../assets/Aisystem.jpeg'
-import eReceiptImage from '../assets/MONEY.png'
-import Scalable from '../assets/scalable.jpeg'
+const rolebased = '/images/rolebased.jpeg'
+const Aisystem = '/images/aisystem.jpeg'
+const eReceiptImage = '/images/money.png'
+const Scalable = '/images/scalable.jpeg'
 
 const fadeInUp = {
   initial: { opacity: 0, y: 30 },
